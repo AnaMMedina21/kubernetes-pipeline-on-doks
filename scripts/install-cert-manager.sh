@@ -3,6 +3,13 @@
 BASEDIR=$(dirname "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")
 source "${BASEDIR}/scripts/functions.sh"
 
+echo "Adding prerequisites for Cert Manager, according to readme in stable/cert-manager..."
+kubectl apply \
+    -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.6/deploy/manifests/00-crds.yaml
+
+kubectl label namespace kube-system certmanager.k8s.io/disable-validation="true"
+echo
+
 # -----------------------------------------------------------------------------
 # Install Cert Manager
 # -----------------------------------------------------------------------------
@@ -18,11 +25,8 @@ else
 fi
 
 # Wait for the Certificate Manager to come online before trying to create any Cluster Issuers.
-echo "Please wait while the Cert Manager pod comes online..."
-until [[ $(kubectl get pods -n kube-system 2> /dev/null | grep cert-manager | awk -F " " '{print $2}' | awk -F "/" '{print $1}') -ge "1" ]]; do
-  echo -n "."
-  sleep 1
-done
+echo "Please wait while the Cert Manager Deployment is complete..."
+kubectl rollout status deployment/cert-manager -n kube-system --watch
 echo
 
 echo -e "\033[32mCert Manager is up and running!\033[39m"

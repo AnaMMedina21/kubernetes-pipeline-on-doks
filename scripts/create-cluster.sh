@@ -57,11 +57,11 @@ echo
 
 # Cluster Creation
 echo -e "A Kubernetes cluster with the following configuration will be created.\033[39m"
-echo "Name: kube-cluster"
-echo "Region: nyc1"
-echo "Version: 1.13.2-do.0"
-echo "Node Size: s-1vcpu-2gb"
-echo "Node Count: 1"
+echo "Name: $CLUSTER_NAME"
+echo "Region: $CLUSTER_REGION"
+echo "Version: $CLUSTER_VERSION"
+echo "Node Size: $NODE_SIZE"
+echo "Node Count: $NODE_COUNT"
 echo
 
 echo "Creating a new Kubernetes cluster, please wait a few minutes..."

@@ -19,7 +19,7 @@ else
 fi
 
 # Wait for Tiller to spin up before continuing to install software.
-echo "Please wait while the tiller pod comes online..."
+echo "Please wait while the Tiller Pod comes online..."
 until [[ $(kubectl get pods -n kube-system 2> /dev/null | grep tiller | awk -F " " '{print $2}' | awk -F "/" '{print $1}') -ge "1" ]]; do
   echo -n "."
   sleep 1

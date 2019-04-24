@@ -306,7 +306,7 @@ else
   exit 1
 fi
 
-echo "Please wait while the Harbor pods come online. This may take a few minutes..."
+echo "Please wait while the Harbor Pods come online. This may take a few minutes..."
 until [[ $(kubectl get pods -n harbor 2> /dev/null | grep harbor-core | awk -F " " '{print $2}' | awk -F "/" '{print $1}') -ge "1" ]]; do
   echo -n "."
   sleep 1

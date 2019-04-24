@@ -7,6 +7,7 @@ While experimenting with Kubernetes on DigitalOcean, I found myself spinning up 
 ## What are the requirements?
 
 * MacOS Mojave (Untested on other Unix based systems, or other versions of MacOS)
+* Z shell (Zsh) (scripts dependency on print utility)
 * Homebrew
 * Kubectl
 * Helm
@@ -38,6 +39,8 @@ Once these dependencies are present the script will configure the following:
 
 **Note:** Setting up the Ingress *WILL* configure a DigitalOcean Load Balancer. This is a service that DigitalOcean charges for, so keep that in mind.
 
+A miminimum of two 8 GB Memory / 4 vCPUs droplets (=4 K8s Worker Nodes) is recommended if you answer yes to many of the questions to install packages.
+
 ## How do I use this script?
 
 Clone the repository onto your local machine.
@@ -59,3 +62,7 @@ Run the script.
 ```
 
 The script will guide you through the setup process, prompting for input when necessary. Follow the instructions in the script and you'll be good to go!
+
+## Cluster Removal
+
+There are instructions [here](https://www.digitalocean.com/docs/kubernetes/how-to/delete-clusters/) on how to remove the cluster an associated resources. A cluster can also be removed with doctl, see `doctl kubernetes cluster delete --help`.

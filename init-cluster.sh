@@ -13,12 +13,13 @@ source "${BASEDIR}/scripts/functions.sh"
 # ------------------------------------------------------------------------------
 
 echo -e "Welcome, this script will help ease the process of setting up a" \
-        "Kubernetes cluster from scratch on DigitalOcean."
-echo -e "First, we’ll check for any necessary dependencies and install them if necessary."
-echo -e "After this you will be guided through each step of the process, being prompted" \
-        "for the necessary information needed for configuration."
-echo -e "Let’s start by checking those dependencies, here's what we're looking for:"
-echo -e "Brew, Kubectl, Helm, and Doctl."
+        "Kubernetes cluster from scratch on DigitalOcean. First, we’ll check" \
+        "for any necessary dependencies and install them if necessary. After" \
+        "this you will be guided through each step of the process, being prompted" \
+        "for the necessary information needed for configuration." | fold -s
+echo    
+echo -e "Let’s start by checking those dependencies, here's what we're looking for:" \
+        "Brew, Kubectl, Helm, and Doctl." | fold -s
 echo
 
 read -p $'\033[33mPress enter to continue...\033[39m'
@@ -112,3 +113,5 @@ if ask "\033[33mWould you like to install Kubernetes Dashboard?\033[39m" Y; then
 else
   echo
 fi
+
+echo "Installation complete."

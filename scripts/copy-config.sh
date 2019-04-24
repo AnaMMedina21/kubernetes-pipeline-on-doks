@@ -21,7 +21,7 @@ TARGET_CLUSTER_NAME=$(echo ${KUBE_CLUSTERS[$choice]} | awk '{print $2}')
 TARGET_CLUSTER_REGION=$(echo ${KUBE_CLUSTERS[$choice]} | awk '{print $3}')
 TARGET_CLUSTER_VERSION=$(echo ${KUBE_CLUSTERS[$choice]} | awk '{print $4}')
 
-# Save the config, throwing an error is something unexpected happens.
+# Save the config, throwing an error if something unexpected happens.
 doctl kubernetes cluster kubeconfig save "${TARGET_CLUSTER_ID}" > /dev/null
 if [[ $? -eq 0 ]]; then
   echo -e "\033[32mThe kubeconfig has been successfully saved to $HOME/.kube/config.\033[39m"
