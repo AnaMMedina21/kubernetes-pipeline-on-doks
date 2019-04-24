@@ -2,6 +2,7 @@
 
 BASEDIR=$(dirname "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")
 source "${BASEDIR}/scripts/functions.sh"
+NOTES="${BASEDIR}/files/install-notes.md"
 
 # -----------------------------------------------------------------------------
 # Install Jenkins
@@ -200,7 +201,7 @@ done;
 echo # For newline.
 
 echo -e "\033[32mJenkins is up and running!\033[39m"
-echo "Jenkins can be accessed via https://${JENKINS_FQDN}"
+echo "Jenkins can be accessed via https://${JENKINS_FQDN}" | tee -a NOTES
 JENKINS_PASSWORD=$(printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo)
-echo -e "\033[33mYour default Jenkins password is\033[39m: ${JENKINS_PASSWORD}"
-echo
+echo -e "\033[33mYour default Jenkins password is\033[39m: ${JENKINS_PASSWORD}" | tee -a $NOTES
+echo | tee -a $NOTES

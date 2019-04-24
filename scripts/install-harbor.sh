@@ -2,6 +2,7 @@
 
 BASEDIR=$(dirname "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")
 source "${BASEDIR}/scripts/functions.sh"
+NOTES="${BASEDIR}/files/install-notes.md"
 
 # -----------------------------------------------------------------------------
 # Install Harbor
@@ -314,7 +315,7 @@ done;
 echo # For newline.
 
 echo -e "\033[32mHarbor is up and running!\033[39m"
-echo "Harbor can be accessed via https://${HARBOR_FQDN}"
-echo -e "\033[33mYou may log in using the username\033[39m: admin"
-echo -e "\033[33mYour default Harbor password is\033[39m: ${ADMIN_PASSWORD}"
-echo
+echo "Harbor can be accessed via https://${HARBOR_FQDN}" | tee -a $NOTES
+echo -e "\033[33mYou may log in using the username\033[39m: admin" | tee -a $NOTES
+echo -e "\033[33mYour default Harbor password is\033[39m: ${ADMIN_PASSWORD}" | tee -a $NOTES
+echo | tee -a $NOTES

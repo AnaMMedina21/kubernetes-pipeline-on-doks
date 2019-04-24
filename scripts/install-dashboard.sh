@@ -2,6 +2,7 @@
 
 BASEDIR=$(dirname "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")
 source "${BASEDIR}/scripts/functions.sh"
+NOTES="${BASEDIR}/files/install-notes.md"
 
 # -----------------------------------------------------------------------------
 # Install Kubernetes Dashboard
@@ -46,7 +47,8 @@ echo
 
 echo -e "\033[33mTo access the dashboard, you must run the following command in a terminal window:\033[39m"
 echo "kubectl proxy"
-echo -e "\033[33mOnce the proxy has been opened, the dashboard may be accessed via\033[39m:"
-echo "http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:https/proxy/"
-echo -e "\033[33mThe following access token can be used to log in to the dashboard\033[39m:" 
-echo "${ACCESS_TOKEN}"
+echo -e "\033[33mOnce the proxy has been opened, the dashboard may be accessed via\033[39m:" | tee -a $NOTES
+echo "http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:https/proxy/" | tee -a $NOTES
+echo -e "\033[33mThe following access token can be used to log in to the dashboard\033[39m:" | tee -a $NOTES
+echo "${ACCESS_TOKEN}" | tee -a $NOTES
+echo | tee -a $NOTES

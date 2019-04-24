@@ -4,6 +4,7 @@ set -e
 
 BASEDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 source "${BASEDIR}/scripts/functions.sh"
+NOTES="${BASEDIR}/files/install-notes.md"
 
 # Set the backspace key here.
 # Create a gif of the script?
@@ -11,6 +12,8 @@ source "${BASEDIR}/scripts/functions.sh"
 # ------------------------------------------------------------------------------
 # Welcome
 # ------------------------------------------------------------------------------
+
+echo "Started install $(date)" > $NOTES
 
 echo -e "Welcome, this script will help ease the process of setting up a" \
         "Kubernetes cluster from scratch on DigitalOcean. First, we’ll check" \
@@ -28,7 +31,6 @@ echo
 # ------------------------------------------------------------------------------
 # Check Dependencies: Brew, Kubectl, Helm, Doctl.
 # ------------------------------------------------------------------------------
-
 "${BASEDIR}"/scripts/dependency-check.sh
 
 # ------------------------------------------------------------------------------
@@ -114,4 +116,4 @@ else
   echo
 fi
 
-echo "Installation complete."
+echo "Install complete $(date)" | tee -a $NOTES
