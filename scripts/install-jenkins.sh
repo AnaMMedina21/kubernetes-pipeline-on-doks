@@ -82,7 +82,7 @@ kubectl apply -f "${BASEDIR}"/files/pvc-jenkins.yaml > /dev/null
 if [[ $? -eq 0 ]]; then
   echo -e "\033[32mVolume successfully attached to Kubernetes!\033[39m"
 else
-  echo -e "\033[31mThere was a problem attching the volume.\033[39m"
+  echo -e "\033[31mThere was a problem attaching the volume.\033[39m"
 fi
 echo
 

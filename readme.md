@@ -7,7 +7,6 @@ While experimenting with Kubernetes on DigitalOcean, I found myself spinning up 
 ## What are the requirements?
 
 * MacOS Mojave (Untested on other Unix based systems, or other versions of MacOS)
-* Z shell (Zsh) (scripts dependency on print utility)
 * Homebrew
 * Kubectl
 * Helm
