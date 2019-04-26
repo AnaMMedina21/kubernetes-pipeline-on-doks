@@ -19,9 +19,9 @@ echo
 echo "Fetching Kubernetes information, please wait..."
 echo
 
-REGIONS=($(doctl k8s options regions | awk '{if(NR>1)print $1}'))
-VERSIONS=($(doctl k8s options versions | awk '{if(NR>1)print $1}'))
-NODE_SIZES=($(doctl k8s options sizes | awk '{if(NR>1)print $1}'))
+REGIONS=($(doctl k8s options regions -o text | awk '{if(NR>1)print $1}'))
+VERSIONS=($(doctl k8s options versions -o text | awk '{if(NR>1)print $1}'))
+NODE_SIZES=($(doctl k8s options sizes -o text | awk '{if(NR>1)print $1}'))
 
 # Cluster Region
 echo -e "\033[33mWhat region would you like to use for your cluster?\033[39m"
@@ -45,7 +45,7 @@ NODE_SIZE="${NODE_SIZES[$choice]}"
 echo -e "\033[33mHow many nodes would you like to provision for this cluster?\033[39m"
 
 while true; do
-  read -p "Desired node count: " NODE_COUNT
+  read -p "Desired node count [3]: " NODE_COUNT
   # Make sure that the entry is a number that is between 1-10.
   if [[ $NODE_COUNT -gt 0 && $NODE_COUNT -lt 11 ]]; then
     break

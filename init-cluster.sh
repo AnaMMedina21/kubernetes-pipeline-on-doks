@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 BASEDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
@@ -57,6 +56,17 @@ fi
 if ask "\033[33mWould you like to initialize Helm/Tiller?\033[39m" Y; then
   echo
   "${BASEDIR}"/scripts/install-helm-tiller.sh
+else
+  echo
+fi
+
+# ------------------------------------------------------------------------------
+# External DNS Controller Setup
+# ------------------------------------------------------------------------------
+
+if ask "\033[33mWould you like to install the External DNS Controller (this is currently experimental)?\033[39m" N; then
+  echo
+  "${BASEDIR}"/scripts/external-dns.sh
 else
   echo
 fi

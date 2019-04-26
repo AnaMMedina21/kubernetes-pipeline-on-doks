@@ -64,4 +64,4 @@ The script will guide you through the setup process, prompting for input when ne
 
 ## Cluster Removal
 
-There are instructions [here](https://www.digitalocean.com/docs/kubernetes/how-to/delete-clusters/) on how to remove the cluster an associated resources. A cluster can also be removed with doctl, see `doctl kubernetes cluster delete --help`.
+There are instructions [here](https://www.digitalocean.com/docs/kubernetes/how-to/delete-clusters/) on how to remove the cluster an associated resources. A cluster can also be removed with doctl, see `doctl kubernetes cluster delete --help`. After this be sure to go into the portal and delete any associated DNS records, load balancers and volumes associated with this removed cluster. Caution: In most cases your volumes may contain data and you probably want to leave the volumes intact.

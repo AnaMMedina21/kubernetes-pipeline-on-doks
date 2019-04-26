@@ -23,9 +23,9 @@ echo
 CLUSTER_ID=$(kubectl cluster-info | \
   grep -om 1 "\(https://\)\([^.]\+\)" | \
   awk -F "//" '{print $2}')
-CLUSTER_NAME=$(doctl kubernetes cluster get "$CLUSTER_ID" | \
+CLUSTER_NAME=$(doctl kubernetes cluster get "$CLUSTER_ID" -o text | \
   awk '{if(NR>1)print $2}')
-CLUSTER_REGION=$(doctl kubernetes cluster get "$CLUSTER_ID" | \
+CLUSTER_REGION=$(doctl kubernetes cluster get "$CLUSTER_ID" -o text | \
   awk '{if(NR>1)print $3}')
 
 VOLUMES_NEEDED=("Registry" "Chartmuseum" "Jobservice" "Database" "Redis")
@@ -42,7 +42,7 @@ if ask "\033[33mAre there existing volumes in DigitalOcean that should be used f
 
   # Retrieve the list of volumes in DigitalOcean.
   IFS=$'\n'
-  VOLUME_LIST=($(doctl compute volume list | awk '{if(NR>1)printf("%s  %-40s  %s %s  %s\n", $1, $2, $3, $4, $5)}'))
+  VOLUME_LIST=($(doctl compute volume list -o text | awk '{if(NR>1)printf("%s  %-40s  %s %s  %s\n", $1, $2, $3, $4, $5)}'))
   unset IFS
 
   echo -e "\033[33mOf the following, which volumes are already present in DigitalOcean?\033[39m"
@@ -123,7 +123,8 @@ for i in "${!VOLUMES_NEEDED[@]}"; do
   CREATE_VOLUME_OUTPUT=$(doctl compute volume create "${VOLUME_NAME}" \
     --region ${CLUSTER_REGION} \
     --fs-type ext4 \
-    --size ${VOLUME_SIZE}GiB)
+    --size ${VOLUME_SIZE}GiB \
+    --output text)
 
   if [[ $? -eq 0 ]]; then
     echo -e  "\033[32mVolume successfully created!\033[39m"
@@ -168,7 +169,7 @@ if ask "\033[33mWould you like to create a DNS record for Harbor?\033[39m"; then
   echo
   echo -e "\033[33mWhich domain will Harbor be hosted on?\033[39m"
 
-  VALID_DOMAINS=($(doctl compute domain list | awk '{if(NR>1)print $1}'))
+  VALID_DOMAINS=($(doctl compute domain list -o text | awk '{if(NR>1)print $1}'))
   
   select_option "${VALID_DOMAINS[@]}"
   choice=$?
@@ -198,7 +199,7 @@ if ask "\033[33mWould you like to create a DNS record for Harbor?\033[39m"; then
   echo
 
   KUBE_LB=($(kubectl get svc --all-namespaces | grep LoadBalancer | awk '{print $5}'))
-  DO_LB=($(doctl compute load-balancer list | awk '{if(NR>1)print $2}'))
+  DO_LB=($(doctl compute load-balancer list -o text | awk '{if(NR>1)print $2}'))
 
   # Make sure that the load balancers in Kubernetes 
   # match the ones present in DigitalOcean.
@@ -291,14 +292,16 @@ sed -E "${SED_STRING}" "${BASEDIR}"/templates/harbor-values.yaml > "${BASEDIR}"/
 # Install Harbor (Finally)
 echo "Installing Harbor onto the Kubernetes cluster..."
 
-# Since Harbor needs to be installed via a local chart, we clone the chart to the
-# local machine, and then checkout version 1.0.0.
+# Since Harbor needs to be installed via a local chart, clone the chart to the
+# local machine, and then checkout version 1.0.1.
 if [[ ! -d "${BASEDIR}"/files/harbor-helm ]]; then
   git clone https://github.com/goharbor/harbor-helm "${BASEDIR}"/files/harbor-helm > /dev/null 2>&1
 fi
-git --git-dir="${BASEDIR}"/files/harbor-helm/.git --work-tree="${BASEDIR}"/files/harbor-helm checkout 1.0.0 > /dev/null 2>&1
+git --git-dir="${BASEDIR}"/files/harbor-helm/.git --work-tree="${BASEDIR}"/files/harbor-helm checkout 1.0.1 > /dev/null 2>&1
 
-helm upgrade --install harbor --namespace harbor "${BASEDIR}"/files/harbor-helm -f "${BASEDIR}"/files/harbor-values.yaml > /dev/null 2>&1
+helm upgrade --install harbor --namespace harbor \
+  "${BASEDIR}"/files/harbor-helm -f \
+  "${BASEDIR}"/files/harbor-values.yaml > /dev/null 2>&1
 
 if [[ $? -eq 0 ]]; then
   echo -e "\033[32mHarbor has been successfully installed!\033[39m"
@@ -312,7 +315,7 @@ until [[ $(kubectl get pods -n harbor 2> /dev/null | grep harbor-core | awk -F "
   echo -n "."
   sleep 1
 done;
-echo # For newline.
+echo
 
 echo -e "\033[32mHarbor is up and running!\033[39m"
 echo "Harbor can be accessed via https://${HARBOR_FQDN}" | tee -a $NOTES

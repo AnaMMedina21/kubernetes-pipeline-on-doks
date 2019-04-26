@@ -24,7 +24,7 @@ if ask "\033[33mUse existing Block Storage Volume for Jenkins?\033[39m"; then
 
   # Retrieve the list of volumes in DigitalOcean.
   IFS=$'\n'
-  VOLUME_LIST=($(doctl compute volume list | awk '{if(NR>1)printf("%s  %-40s  %s %s  %s\n", $1, $2, $3, $4, $5)}'))
+  VOLUME_LIST=($(doctl compute volume list -o text | awk '{if(NR>1)printf("%s  %-40s  %s %s  %s\n", $1, $2, $3, $4, $5)}'))
   unset IFS
 
   select_option "${VOLUME_LIST[@]}"
@@ -47,9 +47,9 @@ else # No existing volume is being used.
   CLUSTER_ID=$(kubectl cluster-info | \
     grep -om 1 "\(https://\)\([^.]\+\)" | \
     awk -F "//" '{print $2}')
-  CLUSTER_NAME=$(doctl kubernetes cluster get "${CLUSTER_ID}" | \
+  CLUSTER_NAME=$(doctl kubernetes cluster get "${CLUSTER_ID}" -o text | \
     awk '{if(NR>1)print $2}')
-  CLUSTER_REGION=$(doctl kubernetes cluster get "${CLUSTER_ID}" | \
+  CLUSTER_REGION=$(doctl kubernetes cluster get "${CLUSTER_ID}" -o text | \
     awk '{if(NR>1)print $3}')
 
   echo "Creating a ${VOLUME_SIZE}GB Block Storage Volume named ${VOLUME_NAME} in" \
@@ -58,7 +58,8 @@ else # No existing volume is being used.
   CREATE_VOLUME_OUTPUT=$(doctl compute volume create "${VOLUME_NAME}" \
 	  --region ${CLUSTER_REGION} \
   	--fs-type ext4 \
-	  --size ${VOLUME_SIZE}GiB)
+	  --size ${VOLUME_SIZE}GiB \
+    --output text)
 
   if [[ $? -eq 0 ]]; then
     echo -e  "\033[32mVolume successfully created!\033[39m"
@@ -91,7 +92,7 @@ if ask "\033[33mWould you like to create a DNS record for Jenkins?\033[39m"; the
   echo
   echo -e "\033[33mWhich domain will Jenkins be hosted on?\033[39m"
 
-  VALID_DOMAINS=($(doctl compute domain list | awk '{if(NR>1)print $1}'))
+  VALID_DOMAINS=($(doctl compute domain list -o text | awk '{if(NR>1)print $1}'))
   
   select_option "${VALID_DOMAINS[@]}"
   choice=$?
@@ -121,7 +122,7 @@ if ask "\033[33mWould you like to create a DNS record for Jenkins?\033[39m"; the
   echo
 
   KUBE_LB=($(kubectl get svc --all-namespaces | grep LoadBalancer | awk '{print $5}'))
-  DO_LB=($(doctl compute load-balancer list | awk '{if(NR>1)print $2}'))
+  DO_LB=($(doctl compute load-balancer list -o text | awk '{if(NR>1)print $2}'))
 
   # Make sure that the load balancers in Kubernetes 
   # match the ones present in DigitalOcean.
@@ -198,7 +199,7 @@ until [[ $(kubectl get pods -n jenkins 2>/dev/null | grep jenkins | awk -F " " '
   echo -n "."
   sleep 1
 done;
-echo # For newline.
+echo
 
 echo -e "\033[32mJenkins is up and running!\033[39m"
 echo "Jenkins can be accessed via https://${JENKINS_FQDN}" | tee -a NOTES

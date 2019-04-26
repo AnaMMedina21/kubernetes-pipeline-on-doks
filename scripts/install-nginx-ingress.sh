@@ -23,7 +23,7 @@ until [[ $(kubectl get pods -n nginx-ingress 2> /dev/null | grep ingress-control
   echo -n "."
   sleep 1
 done
-echo # For newline.
+echo
 
 echo -e "\033[32mNginx Ingress is up and running!\033[39m"
 echo
