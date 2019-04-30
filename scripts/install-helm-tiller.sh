@@ -1,4 +1,6 @@
 #!/bin/bash
+BASEDIR=$(dirname "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")
+source "${BASEDIR}/scripts/functions.sh"
 
 # ------------------------------------------------------------------------------
 # Cluster Initializaton (Helm/Tiller)
@@ -9,22 +11,12 @@
 echo "Setting up resources and initializing Helm/Tiller..."
 kubectl -n kube-system create serviceaccount tiller > /dev/null 2>&1
 kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller > /dev/null 2>&1
-helm init --service-account tiller > /dev/null 2>&1
+helm init --service-account tiller && helm repo update > /dev/null 2>&1
 
-if [[ $? -eq 0 ]]; then
-  echo -e "\033[32mTiller has been initialized!\033[39m"
-else
+if [[ $? -ne 0 ]]; then
   echo -e "\033[31mThere was a problem intializing Tiller.\033[39m"
   exit 1
 fi
 
-# Wait for Tiller to spin up before continuing to install software.
-echo "Please wait while the Tiller Pod comes online..."
-until [[ $(kubectl get pods -n kube-system 2> /dev/null | grep tiller | awk -F " " '{print $2}' | awk -F "/" '{print $1}') -ge "1" ]]; do
-  echo -n "."
-  sleep 1
-done
-echo
-
-echo -e "\033[32mTiller is up and running!\033[39m"
-echo
+kubectl rollout status deployment/tiller-deploy  -n kube-system -w > /dev/null 2>&1 & spinner "Awaiting Helm/Tiller availability"
+echo -e "\033[32mHelm/Tiller is ready.\033[39m"

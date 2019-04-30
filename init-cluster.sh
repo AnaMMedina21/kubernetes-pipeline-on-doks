@@ -3,127 +3,143 @@ set -e
 
 BASEDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 source "${BASEDIR}/scripts/functions.sh"
-NOTES="${BASEDIR}/files/install-notes.md"
-
-# Set the backspace key here.
-# Create a gif of the script?
 
 # ------------------------------------------------------------------------------
-# Welcome
+# Introduction
 # ------------------------------------------------------------------------------
 
-echo "Started install $(date)" > $NOTES
+echo "Started install $(date)"
 
-echo -e "Welcome, this script will help ease the process of setting up a" \
-        "Kubernetes cluster from scratch on DigitalOcean. First, we’ll check" \
-        "for any necessary dependencies and install them if necessary. After" \
-        "this you will be guided through each step of the process, being prompted" \
-        "for the necessary information needed for configuration." | fold -s
+echo -e "This script will eases the process of setting up a" \
+        "Kubernetes cluster, for CI/CD purposes, from scratch on" \
+        "DigitalOcean. It first checks for any necessary" \
+        "dependencies and installs them if necessary. After" \
+        "this you will be guided through each step of the process," \
+        "being prompted for the necessary information needed for configuration." | fold -s
 echo    
 echo -e "Let’s start by checking those dependencies, here's what we're looking for:" \
-        "Brew, Kubectl, Helm, and Doctl." | fold -s
+        "Kubectl, Helm, and Doctl." | fold -s
 echo
 
 read -p $'\033[33mPress enter to continue...\033[39m'
 echo
 
+
 # ------------------------------------------------------------------------------
 # Check Dependencies: Brew, Kubectl, Helm, Doctl.
 # ------------------------------------------------------------------------------
-"${BASEDIR}"/scripts/dependency-check.sh
+if [ $machine == "Mac" ]; then
+  "${BASEDIR}"/scripts/dependency-check-mac.sh
+elif [ $machine == "Linux" ]; then
+  "${BASEDIR}"/scripts/dependency-check-linux.sh
+fi
+
+"${BASEDIR}"/scripts/dependency-check-generic.sh
+
 
 # ------------------------------------------------------------------------------
 # Create Cluster
 # ------------------------------------------------------------------------------
 
-if ask "\033[33mWould you like to create a new Kubernetes cluster?\033[39m"; then
+if ask "Create a new Kubernetes cluster?"; then
   echo
   "${BASEDIR}"/scripts/create-cluster.sh
-
 else # Copy Config
   echo
-  if ask "\033[33mWould you like to save an existing config?\033[39m" Y; then
+  if ask "Apply the existing Kubernetes config to kubectl context?" Y; then
     echo
     "${BASEDIR}"/scripts/copy-config.sh
   fi
   echo
 fi
+echo
+
 
 # ------------------------------------------------------------------------------
 # Cluster Initializaton (Helm/Tiller)
 # ------------------------------------------------------------------------------
 
-if ask "\033[33mWould you like to initialize Helm/Tiller?\033[39m" Y; then
+if ask "Initialize Helm/Tiller?" Y; then
   echo
   "${BASEDIR}"/scripts/install-helm-tiller.sh
 else
   echo
 fi
-
-# ------------------------------------------------------------------------------
-# External DNS Controller Setup
-# ------------------------------------------------------------------------------
-
-if ask "\033[33mWould you like to install the External DNS Controller (this is currently experimental)?\033[39m" N; then
-  echo
-  "${BASEDIR}"/scripts/external-dns.sh
-else
-  echo
-fi
-
-# ------------------------------------------------------------------------------
-# Nginx Ingress Setup
-# ------------------------------------------------------------------------------
-
-if ask "\033[33mWould you like to install the Nginx Ingress?\033[39m" Y; then
-  echo
-  "${BASEDIR}"/scripts/install-nginx-ingress.sh
-else
-  echo
-fi
-
-# ------------------------------------------------------------------------------
-# Certificate Manager Setup
-# ------------------------------------------------------------------------------
-
-if ask "\033[33mWould you like to install Cert Manager?\033[39m" Y; then
-  echo
-  "${BASEDIR}"/scripts/install-cert-manager.sh
-else
-  echo
-fi
-
-# ------------------------------------------------------------------------------
-# Jenkins Setup
-# ------------------------------------------------------------------------------
-
-if ask "\033[33mWould you like to install and configure Jenkins?\033[39m" Y; then
-  echo
-  "${BASEDIR}"/scripts/install-jenkins.sh
-else
-  echo
-fi
-
-# ------------------------------------------------------------------------------
-# Harbor Setup
-# ------------------------------------------------------------------------------
-
-if ask "\033[33mWould you like to install and configure Harbor?\033[39m" Y; then
-  echo
-  "${BASEDIR}"/scripts/install-harbor.sh
-else
-  echo
-fi
+echo
 
 # ------------------------------------------------------------------------------
 # Dashboard Setup
 # ------------------------------------------------------------------------------
 
-if ask "\033[33mWould you like to install Kubernetes Dashboard?\033[39m" Y; then
+if ask "Install Kubernetes Dashboard?" Y; then
   echo
   "${BASEDIR}"/scripts/install-dashboard.sh
 else
   echo
 fi
+echo
 
-echo "Install complete $(date)" | tee -a $NOTES
+# ------------------------------------------------------------------------------
+# Nginx Ingress Setup
+# ------------------------------------------------------------------------------
+
+if ask "Install the Nginx Ingress?" Y; then
+  echo
+  "${BASEDIR}"/scripts/install-nginx-ingress.sh
+else
+  echo
+fi
+echo
+
+
+# ------------------------------------------------------------------------------
+# Create DNS A Record for Ingress Setup
+# ------------------------------------------------------------------------------
+if ask "Create a DNS A record for the cluster ingress?" Y ;then
+  echo
+  "${BASEDIR}"/scripts/create-dns.sh
+else
+  echo
+fi
+echo
+
+
+# ------------------------------------------------------------------------------
+# Certificate Manager Setup
+# ------------------------------------------------------------------------------
+
+if ask "Install Cert Manager?" Y; then
+  echo
+  "${BASEDIR}"/scripts/install-cert-manager.sh
+else
+  echo
+fi
+echo
+
+
+# ------------------------------------------------------------------------------
+# Jenkins Setup
+# ------------------------------------------------------------------------------
+
+if ask "Install and configure Jenkins?" Y; then
+  echo
+  "${BASEDIR}"/scripts/install-jenkins.sh
+else
+  echo
+fi
+echo
+
+
+# ------------------------------------------------------------------------------
+# Harbor Setup
+# ------------------------------------------------------------------------------
+
+if ask "Install and configure Harbor?" Y; then
+  echo
+  "${BASEDIR}"/scripts/install-harbor.sh
+else
+  echo
+fi
+echo
+
+echo "Kubernetes cluster install and provisioning complete $(date)"

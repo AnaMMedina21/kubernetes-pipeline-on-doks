@@ -2,7 +2,6 @@
 
 BASEDIR=$(dirname "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")
 source "${BASEDIR}/scripts/functions.sh"
-NOTES="${BASEDIR}/files/install-notes.md"
 
 # -----------------------------------------------------------------------------
 # Install Harbor
@@ -34,7 +33,7 @@ VOLUME_IDS=()
 VOLUME_NAME=()
 VOLUME_SIZE=()
 
-if ask "\033[33mAre there existing volumes in DigitalOcean that should be used for Harbor?\033[39m"; then
+if ask "Are there existing volumes in DigitalOcean that should be used for Harbor?\033[39m"; then
   echo
 
   echo "Fetching volume information, please wait..."
@@ -127,7 +126,7 @@ for i in "${!VOLUMES_NEEDED[@]}"; do
     --output text)
 
   if [[ $? -eq 0 ]]; then
-    echo -e  "\033[32mVolume successfully created!\033[39m"
+    echo -e  "\033[32mVolume created.\033[39m"
     
     # Volume ID can only be found after creation.
     VOLUME_ID=$(echo "${CREATE_VOLUME_OUTPUT}" | awk '{if(NR>1)print $1}')
@@ -156,7 +155,7 @@ for i in "${!VOLUMES_PRESENT[@]}"; do
   kubectl apply -f "${BASEDIR}"/files/pvc-harbor-"${VOLUMES_PRESENT[$i]}".yaml > /dev/null 2>&1
 
   if [[ $? -eq 0 ]]; then
-    echo -e  "\033[32mSuccessfully mounted ${VOLUMES_PRESENT[$i]} volume!\033[39m"
+    echo -e  "\033[Mounted ${VOLUMES_PRESENT[$i]} volume.\033[39m"
   else
     echo -e "\033[31mThere was a problem mounting the ${VOLUMES_PRESENT[$i]} volume.\033[39m"
     exit 1
@@ -164,107 +163,14 @@ for i in "${!VOLUMES_PRESENT[@]}"; do
 done
 echo
 
-# DNS record creation.
-if ask "\033[33mWould you like to create a DNS record for Harbor?\033[39m"; then
-  echo
-  echo -e "\033[33mWhich domain will Harbor be hosted on?\033[39m"
+# Ask for fully qualified domain name
+echo
+echo -en "\033[33mWhat is the FQDN that Harbor will be hosted from?\033[39m "
+echo -e "Example: https://harbor.rootdomain.com, assuming *.rootdomain.com is the DNS A record."
+read -p "Harbor domain name: https://" HARBOR_FQDN
+# Strip out 'http://' and 'https://'.
+HARBOR_FQDN=$(echo "${HARBOR_FQDN}" | sed -e 's/http[s]\{0,1\}:\/\///g')
 
-  VALID_DOMAINS=($(doctl compute domain list -o text | awk '{if(NR>1)print $1}'))
-  
-  select_option "${VALID_DOMAINS[@]}"
-  choice=$?
-  DOMAIN_NAME="${VALID_DOMAINS[$choice]}"
-
-  # Validate FDQN with domain name.
-  echo -en "\033[33mWhat is the FQDN that Harbor will be hosted from?\033[39m "
-  echo -e "(Example: https://harbor.dev.example.com)"
-  while true; do
-    read -p "Harbor domain name: https://" HARBOR_FQDN
-    # Strip out 'http://' and 'https://' just in case.
-    HARBOR_FQDN=$(echo "${HARBOR_FQDN}" | sed -e 's/http[s]\{0,1\}:\/\///g')
-
-    if [[ -z $(echo "${HARBOR_FQDN}" | grep ".*${DOMAIN_NAME}$") ]]; then
-      echo -e "\033[31mThe FQDN does not match the domain name.\033[39m"
-    else
-      break
-    fi;
-  done;
-  echo
-
-  # Get record name minus the domain name.
-  DNS_RECORD_NAME=$(echo "${HARBOR_FQDN}" | sed 's/.'"${DOMAIN_NAME}"'//g')
-
-  # Load Balancer IP validation.
-  echo "Fetching load balancer information, please wait..."
-  echo
-
-  KUBE_LB=($(kubectl get svc --all-namespaces | grep LoadBalancer | awk '{print $5}'))
-  DO_LB=($(doctl compute load-balancer list -o text | awk '{if(NR>1)print $2}'))
-
-  # Make sure that the load balancers in Kubernetes 
-  # match the ones present in DigitalOcean.
-  MATCHING=()
-  for i in $KUBE_LB; do
-    for k in $DO_LB; do
-      if [[ "$i" == "$k" ]]; then
-        MATCHING+=("$i")
-      fi
-    done
-  done
-
-  if [[ "${#MATCHING[@]}" -gt 1 ]]; then
-    echo "Multiple load balancers were found. Please choose the desired load balancer to be used."
-    
-    select_option "${MATCHING[@]}"
-    choice=$?
-    LOAD_BALANCER_IP="${MATCHING[$choice]}"
-  else
-    LOAD_BALANCER_IP="${MATCHING}" # Since there will only be one.
-  fi
-
-  echo "DNS records for Harbor will be created with the following information."
-  echo "Domain: ${DOMAIN_NAME}"
-  echo "Records: ${DNS_RECORD_NAME}, notary.${DNS_RECORD_NAME}"
-  echo "Bound Load Balancer IP: ${LOAD_BALANCER_IP}"
-  echo
-
-  echo "Creating DNS records..."
-
-  doctl compute domain records create "${DOMAIN_NAME}" \
-    --record-type A \
-    --record-name "${DNS_RECORD_NAME}" \
-    --record-data "${LOAD_BALANCER_IP}" \
-    --record-priority 0 \
-    --record-ttl 1800 \
-    --record-weight 0 > /dev/null
-
-  if [[ $? -eq 0 ]]; then
-    echo -e "\033[32mDNS record for ${HARBOR_FQDN} successfully created!\033[39m"
-  else
-    echo -e "\033[31mThere was a problem creating the DNS record.\033[39m"
-  fi
-
-  doctl compute domain records create "${DOMAIN_NAME}" \
-    --record-type A \
-    --record-name "notary.${DNS_RECORD_NAME}" \
-    --record-data "${LOAD_BALANCER_IP}" \
-    --record-priority 0 \
-    --record-ttl 1800 \
-    --record-weight 0 > /dev/null
-
-  if [[ $? -eq 0 ]]; then
-    echo -e "\033[32mDNS record for notary.${HARBOR_FQDN} successfully created!\033[39m"
-  else
-    echo -e "\033[31mThere was a problem creating the DNS record.\033[39m"
-  fi
-else
-  echo
-  echo -en "\033[33mWhat is the FQDN that Harbor will be hosted from?\033[39m "
-  echo -e "(Example: https://harbor.dev.example.com)"
-  read -p "Harbor domain name: https://" HARBOR_FQDN
-  # Strip out 'http://' and 'https://'.
-  HARBOR_FQDN=$(echo "${HARBOR_FQDN}" | sed -e 's/http[s]\{0,1\}:\/\///g')
-fi
 echo
 
 # Configure Harbor values.
@@ -289,9 +195,7 @@ done
 
 sed -E "${SED_STRING}" "${BASEDIR}"/templates/harbor-values.yaml > "${BASEDIR}"/files/harbor-values.yaml
 
-# Install Harbor (Finally)
-echo "Installing Harbor onto the Kubernetes cluster..."
-
+# Install Harbor
 # Since Harbor needs to be installed via a local chart, clone the chart to the
 # local machine, and then checkout version 1.0.1.
 if [[ ! -d "${BASEDIR}"/files/harbor-helm ]]; then
@@ -301,24 +205,13 @@ git --git-dir="${BASEDIR}"/files/harbor-helm/.git --work-tree="${BASEDIR}"/files
 
 helm upgrade --install harbor --namespace harbor \
   "${BASEDIR}"/files/harbor-helm -f \
-  "${BASEDIR}"/files/harbor-values.yaml > /dev/null 2>&1
+  "${BASEDIR}"/files/harbor-values.yaml > /dev/null 2>&1 & spinner "Installing Harbor onto the Kubernetes cluster"
 
-if [[ $? -eq 0 ]]; then
-  echo -e "\033[32mHarbor has been successfully installed!\033[39m"
-else
+if [[ $? -ne 0 ]]; then
   echo -e "\033[31mThere was a problem installing Harbor.\033[39m"
   exit 1
 fi
 
-echo "Please wait while the Harbor Pods come online. This may take a few minutes..."
-until [[ $(kubectl get pods -n harbor 2> /dev/null | grep harbor-core | awk -F " " '{print $2}' | awk -F "/" '{print $1}') -ge "1" ]]; do
-  echo -n "."
-  sleep 1
-done;
-echo
-
-echo -e "\033[32mHarbor is up and running!\033[39m"
-echo "Harbor can be accessed via https://${HARBOR_FQDN}" | tee -a $NOTES
-echo -e "\033[33mYou may log in using the username\033[39m: admin" | tee -a $NOTES
-echo -e "\033[33mYour default Harbor password is\033[39m: ${ADMIN_PASSWORD}" | tee -a $NOTES
-echo | tee -a $NOTES
+echo -e "\033[32mHarbor is available at via https://${HARBOR_FQDN}\033[39m"
+echo -e "\033[33mLog in using the username\033[39m: admin"
+echo -e "\033[33mand the password\033[39m: ${ADMIN_PASSWORD}"

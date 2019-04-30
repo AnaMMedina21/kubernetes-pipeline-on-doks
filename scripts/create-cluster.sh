@@ -24,25 +24,25 @@ VERSIONS=($(doctl k8s options versions -o text | awk '{if(NR>1)print $1}'))
 NODE_SIZES=($(doctl k8s options sizes -o text | awk '{if(NR>1)print $1}'))
 
 # Cluster Region
-echo -e "\033[33mWhat region would you like to use for your cluster?\033[39m"
+echo -e "\033[33mSelect the region where Kubernetes will be running?\033[39m"
 select_option "${REGIONS[@]}"
 choice=$?
 CLUSTER_REGION="${REGIONS[$choice]}"
 
 # Kubernetes Version
-echo -e "\033[33mWhich version of Kubernetes would you like to use?\033[39m"
+echo -e "\033[33mWhich version of Kubernetes should be applied?\033[39m"
 select_option "${VERSIONS[@]}"
 choice=$?
 CLUSTER_VERSION="${VERSIONS[$choice]}"
 
 # Node Size
-echo -e "\033[33mPlease specify the node size that you would like to use for this cluster.\033[39m"
+echo -e "\033[33mSelect the desired size for all nodes in this cluster.\033[39m"
 select_option "${NODE_SIZES[@]}"
 choice=$?
 NODE_SIZE="${NODE_SIZES[$choice]}"
 
 # Node Count
-echo -e "\033[33mHow many nodes would you like to provision for this cluster?\033[39m"
+echo -e "\033[33mHow many worker nodes to allocate for this Kubernetes cluster?\033[39m"
 
 while true; do
   read -p "Desired node count [3]: " NODE_COUNT
@@ -72,7 +72,7 @@ doctl kubernetes cluster create "${CLUSTER_NAME}" \
   --count "${NODE_COUNT}"
 
 if [[ $? -eq 0 ]]; then
-  echo -e "\033[32mThe Kubernetes cluster has been successfully created!\033[39m"
+  echo -e "\033[32mThe Kubernetes cluster has been created.\033[39m"
 else
   echo -e "\033[31mThere was a problem creating the Kubernetes cluster.\033[39m"
   exit 1
@@ -89,12 +89,6 @@ else
   exit 1
 fi
 
-echo "Please wait until the nodes are up and running..."
-until [[ $(kubectl get nodes 2>/dev/null | grep "\sReady\s") ]]; do
-  echo -n "."
-  sleep 1
-done
-echo
+kubectl rollout status deployment/coredns -n kube-system > /dev/null & spinner "Waiting for the cluster to be available"
 
-echo -e "\033[32mKubernetes is up and running!\033[39m"
-echo
+echo -e "\033[32mKubernetes is ready.\033[39m"

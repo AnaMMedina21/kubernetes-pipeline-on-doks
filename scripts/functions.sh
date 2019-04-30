@@ -1,5 +1,20 @@
 #!/bin/bash
 
+machine_name() {
+    unameOut="$(uname -s)"
+    case "${unameOut}" in
+        Linux*)     machine=Linux;;
+        Darwin*)    machine=Mac;;
+        CYGWIN*)    machine=Cygwin;;
+        MINGW*)     machine=MinGw;;
+        *)          machine="UNKNOWN:${unameOut}"
+    esac
+
+    # export foo=$machine
+}
+
+machine_name
+
 ask() {
     local prompt default reply
 
@@ -16,7 +31,7 @@ ask() {
 
     while true; do
         # Ask the question (not using "read -p" as it uses stderr not stdout.)
-        echo -en "$1 [$prompt]: "
+        echo -en "\033[33m$1\033[39m [$prompt]: "
 
         # Read the answer (use /dev/tty in case stdin is redirected from somewhere else.)
         read reply </dev/tty
@@ -114,4 +129,24 @@ function select_option {
     cursor_blink_on
 
     return $selected
+}
+
+function spinner() {
+    local info="$1"
+    local pid=$!
+    local delay=0.33
+    local spinstr=".oO@*'"
+    while kill -0 $pid 2> /dev/null; do
+        local temp=${spinstr#?}
+        printf "$info: [%c]" "$spinstr"
+        local spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        local reset="\b\b\b\b\b\b"
+        for ((i=1; i<=$(echo $info | wc -c); i++)); do
+            reset+="\b"
+        done
+        printf $reset
+    done
+    printf "    \b\b\b\b"
+    printf "$info: [done]\n\n"
 }

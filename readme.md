@@ -1,5 +1,21 @@
 # Kubernetes Scaffolding Script
 
+This project has been derivated from [this Github repo](https://github.com/DefrostedTuna/kubernetes-scaffolding). Many thanks to [Rick Bennett @ Github/DefrostedTuna](https://github.com/DefrostedTuna). 
+
+This project takes a few deviations:
+
+- Instead of a separate DNS and load balancer a single DNA A record such as *.yourdom.com points to a single load balancer that delegates to the NGINX ingress controller then to the ingressed services such as Jenkins and Harbor. 
+- Script goal is to run on pure Linux, without dependencies on Brew. Local CLI tools (doctl, helm and kubectl) are more assumed as a prerequisite than something to provision locally.
+- The Jenkins and Harbor versions and associated plugin have been updated to the latest versions.
+- The Helm provisioning was missing an important `helm repo update`.
+- Changed some messaging and added spinner for those blocking moments.
+- Other minor changes [noted in this change set](https://github.com/DefrostedTuna/kubernetes-scaffolding/pull/1).
+
+At some point this script might run more independently in a container. Converting to Anisible may also be a good leap forward.
+
+Below is the unmodified readme from the original project.
+
+----------------
 ## What is this?
 
 While experimenting with Kubernetes on DigitalOcean, I found myself spinning up clusters fairly often to try new things. I got very familiar with the process of doing this and decided to [write a guide](https://gist.github.com/DefrostedTuna/1cf0367b3b121d82a0591e177d6887b8) covering how to set up a barebones cluster, along with common tools that I personally use. This bash script project is an extension of that guide, automating the process of setting up a cluster on DigitalOcean and installing a subset of software to get fresh cluster up and running quickly.
@@ -64,4 +80,4 @@ The script will guide you through the setup process, prompting for input when ne
 
 ## Cluster Removal
 
-There are instructions [here](https://www.digitalocean.com/docs/kubernetes/how-to/delete-clusters/) on how to remove the cluster an associated resources. A cluster can also be removed with doctl, see `doctl kubernetes cluster delete --help`. After this be sure to go into the portal and delete any associated DNS records, load balancers and volumes associated with this removed cluster. Caution: In most cases your volumes may contain data and you probably want to leave the volumes intact.
+There are instructions [here](https://www.digitalocean.com/docs/kubernetes/how-to/delete-clusters/) on how to remove the cluster an associated resources. A cluster can also be removed with doctl, see `doctl kubernetes cluster delete <cluster-name>`. After this be sure to remove any associated DNS records, load balancers and volumes associated with this removed cluster. Caution: In most cases your volumes may contain data and you probably want to leave the volumes intact.

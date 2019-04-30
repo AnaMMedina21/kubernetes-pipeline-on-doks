@@ -18,7 +18,7 @@ echo "Installing Cert Manager please wait..."
 helm upgrade --install cert-manager --namespace kube-system stable/cert-manager > /dev/null 2>&1
 
 if [[ $? -eq 0 ]]; then
-  echo -e "\033[32mCert Manager has been installed successfully!\033[39m"
+  echo -e "\033[32mCert Manager has been installed.\033[39m"
 else
   echo -e "\033[31mThere was a problem installing Cert Manager.\033[39m"
   exit 1
@@ -29,7 +29,7 @@ echo "Please wait while the Cert Manager Deployment is complete..."
 kubectl rollout status deployment/cert-manager -n kube-system --watch
 echo
 
-echo -e "\033[32mCert Manager is up and running!\033[39m"
+echo -e "\033[32mCert Manager is ready.\033[39m"
 echo
 
 echo -en "\033[33mPlease enter your email address\033[39m: "
@@ -42,10 +42,9 @@ sed -E 's/\[EMAIL\]/'"$EMAIL"'/' \
 echo "Configuring default Cluster Issuers for staging and production..."
 kubectl apply -f "${BASEDIR}"/files/cluster-issuers.yaml > /dev/null 2>&1
 
-if [[ $? -eq 0 ]]; then
-  echo -e "\033[32mCluster Issuers have been successfully configured!\033[39m"
-else
+if [[ $? -ne 0 ]]; then
   echo -e "\033[31mThere was a problem configuring the Cluster Issuers.\033[39m"
   exit 1
 fi
-echo
+
+echo -e "\033[32mCluster Issuers have been configured.\033[39m"
