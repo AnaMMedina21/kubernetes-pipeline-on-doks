@@ -13,7 +13,7 @@ This project takes a few deviations:
 
 At some point this script might run more independently in a container. Converting to Anisible may also be a good leap forward. Suggestions are welcome.
 
-Below is the unmodified readme from the original project.
+Below is the readme from the original project.
 
 ----------------
 ## What is this?
