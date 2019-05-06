@@ -1,17 +1,17 @@
-# Kubernetes Scaffolding Script
+# Kubernetes with CI/CD, Provisioning Script for DigitalOcean (DOKS)
 
 This project has been derivated from [this Github repo](https://github.com/DefrostedTuna/kubernetes-scaffolding). Many thanks to [Rick Bennett @ Github/DefrostedTuna](https://github.com/DefrostedTuna). 
 
 This project takes a few deviations:
 
 - Instead of a separate DNS and load balancer a single DNA A record such as *.yourdom.com points to a single load balancer that delegates to the NGINX ingress controller then to the ingressed services such as Jenkins and Harbor. 
-- Script goal is to run on pure Linux, without dependencies on Brew. Local CLI tools (doctl, helm and kubectl) are more assumed as a prerequisite than something to provision locally.
+- Local CLI tool installation include MacOS and has been extended to include Linux flavors. 
 - The Jenkins and Harbor versions and associated plugin have been updated to the latest versions.
-- The Helm provisioning was missing an important `helm repo update`.
-- Changed some messaging and added spinner for those blocking moments.
+- The Helm provisioning now includes missing `helm repo update` instruction.
+- Changed some messaging and added spinners for those blocking moments.
 - Other minor changes [noted in this change set](https://github.com/DefrostedTuna/kubernetes-scaffolding/pull/1).
 
-At some point this script might run more independently in a container. Converting to Anisible may also be a good leap forward.
+At some point this script might run more independently in a container. Converting to Anisible may also be a good leap forward. Suggestions are welcome.
 
 Below is the unmodified readme from the original project.
 
@@ -22,22 +22,18 @@ While experimenting with Kubernetes on DigitalOcean, I found myself spinning up 
 
 ## What are the requirements?
 
-* MacOS Mojave (Untested on other Unix based systems, or other versions of MacOS)
-* Homebrew
-* Kubectl
-* Helm
-* Doctl
+* Linux or MacOS Mojave (Untested on other Unix based systems, or other versions of MacOS)
 
 ## What does it install and configure?
 
 The script will first and foremost check for the proper dependencies. These dependencies include:
 
-* Homebrew
+* Homebrew (if on MacOS)
 * Kubectl
 * Helm
 * Doctl
 
-If these dependencies are not found on the system, the script will attempt to install them for you.
+If these dependencies are not found on your system, the script will attempt to install them for you.
 
 **Note:** The Homebrew installation may take a considerable amount of time if the X Code Development Tools are not found on your system.
 
