@@ -3,10 +3,10 @@
 machine_name() {
     unameOut="$(uname -s)"
     case "${unameOut}" in
-        Linux*)     machine=Linux;;
-        Darwin*)    machine=Mac;;
-        CYGWIN*)    machine=Cygwin;;
-        MINGW*)     machine=MinGw;;
+        Linux*)     machine=linux;;
+        Darwin*)    machine=macos;;
+        CYGWIN*)    machine=cygwin;;
+        MINGW*)     machine=mingw;;
         *)          machine="UNKNOWN:${unameOut}"
     esac
 
