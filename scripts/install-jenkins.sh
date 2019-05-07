@@ -97,7 +97,7 @@ JENKINS_FQDN=$(echo "${JENKINS_FQDN}" | sed -e 's/http[s]\{0,1\}:\/\///g')
 echo
 
 # Configure Jenkins values.
-echo "Configuring Jenkins..."
+echo "Configuring Jenkins. This will take 2-3 minutes."
 sed -E 's/\[HOSTNAME]/'"${JENKINS_FQDN}"'/;s/\[PVC_NAME]/'"${VOLUME_NAME}"'/' \
   "${BASEDIR}"/templates/jenkins-values.yaml > "${BASEDIR}"/files/jenkins-values.yaml
 
@@ -112,4 +112,4 @@ fi
 
 echo -e "\033[32mJenkins is available at https://${JENKINS_FQDN}\033[39m"
 JENKINS_PASSWORD=$(printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo)
-echo -e "\033[32mYour default Jenkins id is \033[39madmin\033[39m and password is \033[39m:${JENKINS_PASSWORD}\033[39m"
+echo -e "\033[32mYour default Jenkins id is \033[39madmin\033[39m and password is\033[39m:${JENKINS_PASSWORD}\033[39m"

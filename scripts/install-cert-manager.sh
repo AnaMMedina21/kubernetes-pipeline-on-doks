@@ -14,7 +14,7 @@ echo
 # Install Cert Manager
 # -----------------------------------------------------------------------------
 
-echo "Installing Cert Manager please wait..."
+echo "Installing Cert Manager. This will take 1-2 minutes."
 helm upgrade --install cert-manager --namespace kube-system stable/cert-manager > /dev/null 2>&1
 
 if [[ $? -eq 0 ]]; then

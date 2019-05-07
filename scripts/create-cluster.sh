@@ -64,7 +64,7 @@ echo "Node Size: $NODE_SIZE"
 echo "Node Count: $NODE_COUNT"
 echo
 
-echo "Creating a new Kubernetes cluster, please wait a few minutes..."
+echo "Creating a new Kubernetes cluster, please wait 10 to 20 minutes for the nodes to initialize..."
 doctl kubernetes cluster create "${CLUSTER_NAME}" \
   --region "${CLUSTER_REGION}" \
   --version "${CLUSTER_VERSION}" \
