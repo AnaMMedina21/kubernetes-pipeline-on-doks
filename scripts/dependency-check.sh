@@ -99,3 +99,4 @@ if [[ -z $(doctl auth init 2>/dev/null | grep "Validating token... OK") ]]; then
   done
 fi
 echo
+

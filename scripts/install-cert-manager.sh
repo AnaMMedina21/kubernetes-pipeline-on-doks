@@ -32,7 +32,8 @@ echo
 echo -e "\033[32mCert Manager is ready.\033[39m"
 echo
 
-echo -en "\033[33mPlease enter your email address\033[39m: "
+# Email for Let's Encrypt certificates
+echo -en "\033[33mLet's Encrypt uses an email to contact you about expiring certificates, and issues related to your account. Please enter your email address used for ACME registration\033[39m: " | fold -s
 read EMAIL
 echo
 

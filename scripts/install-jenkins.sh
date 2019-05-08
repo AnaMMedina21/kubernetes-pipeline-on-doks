@@ -89,16 +89,24 @@ echo
 
 # Ask for fully qualified domain name
 echo
-echo -en "\033[33mWhat is the FQDN that Jenkins will be hosted from?\033[39m"
+echo -en "\033[33mWhat is the FQDN that Jenkins will be hosted from?\033[39m "
 echo -e "Example: https://jenkins.rootdomain.com, assuming *.rootdomain.com is the DNS A record."
 read -p "Jenkins domain name: https://" JENKINS_FQDN
 # Strip out 'http://' and 'https://'.
 JENKINS_FQDN=$(echo "${JENKINS_FQDN}" | sed -e 's/http[s]\{0,1\}:\/\///g')
 echo
 
+# Staging or Production
+echo -e "\033[33mFollow fair use policies by only choosing Production if you are ready to go live with Jenkins. What cluster issuer type do you want to use?\033[39m" | fold -s
+CLUSTER_ISSUERS=("letsencrypt-staging" "letsencrypt-prod")
+select_option "${CLUSTER_ISSUERS[@]}"
+choice=$?
+CLUSTER_ISSUER="${CLUSTER_ISSUERS[$choice]}"
+echo
+
 # Configure Jenkins values.
 echo "Configuring Jenkins. This will take 2-3 minutes."
-sed -E 's/\[HOSTNAME]/'"${JENKINS_FQDN}"'/;s/\[PVC_NAME]/'"${VOLUME_NAME}"'/' \
+sed -E 's/\[HOSTNAME]/'"${JENKINS_FQDN}"'/;s/\[PVC_NAME]/'"${VOLUME_NAME}"'/;s/\[CLUSTER_ISSUER]/'"${CLUSTER_ISSUER}"'/' \
   "${BASEDIR}"/templates/jenkins-values.yaml > "${BASEDIR}"/files/jenkins-values.yaml
 
 # Install Jenkins

@@ -72,7 +72,7 @@ if ask "Are there existing volumes in DigitalOcean that should be used for Harbo
     VOLUME_NAME=$(echo ${VOLUME_LIST[$choice2]} | awk '{print $2}')
     VOLUME_SIZE=$(echo ${VOLUME_LIST[$choice2]} | awk '{print $3}')
 
-    sed -E 's/\[VOLUME_NAME]/'"${VOLUME_NAME}"'/;s/\[VOLUME_SIZE]/'"${VOLUME_SIZE}Gi"'/;s/\[VOLUME_ID]/'"${VOLUME_ID}"'/' \
+    sed -E 's/\[VOLUME_NAME]/'"${VOLUME_NAME}"'/;s/\[VOLUME_SIZE]/'"${VOLUME_SIZE}Gi"'/;s/\[VOLUME_ID]/'"${VOLUME_ID}"'/;s/\[CLUSTER_ISSUER]/'"${CLUSTER_ISSUER}"'/' \
       "${BASEDIR}"/templates/pvc-harbor-"${SELECTED_VOLUME}".yaml > "${BASEDIR}"/files/pvc-harbor-"${SELECTED_VOLUME}".yaml
 
     # Add to volumes that are present.
@@ -163,6 +163,14 @@ for i in "${!VOLUMES_PRESENT[@]}"; do
 done
 echo
 
+# Staging or Production
+echo -e "\033[33mFollow fair use policies by only choosing Production if you are ready to go live with Jenkins. What cluster issuer type do you want to use?\033[39m" | fold -s
+CLUSTER_ISSUERS=("letsencrypt-staging" "letsencrypt-prod")
+select_option "${CLUSTER_ISSUERS[@]}"
+choice=$?
+CLUSTER_ISSUER="${CLUSTER_ISSUERS[$choice]}"
+echo
+
 # Ask for fully qualified domain name
 echo
 echo -en "\033[33mWhat is the FQDN that Harbor will be hosted from?\033[39m "
@@ -175,7 +183,10 @@ echo
 
 # Configure Harbor values.
 echo "Configuring Harbor..."
+
+# The initial password of Harbor admin.
 ADMIN_PASSWORD=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 16)
+# The secret key used for encryption. Must be a string of 16 chars.
 SECRET_KEY=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 16)
 
 SED_STRING=""
@@ -184,6 +195,7 @@ SED_STRING+="s/\[SECRET_KEY]/${SECRET_KEY}/;"
 SED_STRING+="s/\[EXTERNAL_URL]/${HARBOR_FQDN}/;"
 SED_STRING+="s/\[CORE_URL]/${HARBOR_FQDN}/;"
 SED_STRING+="s/\[NOTARY_URL]/notary.${HARBOR_FQDN}/;"
+SED_STRING+="s/\[CLUSTER_ISSUER]/${CLUSTER_ISSUER}/;"
 
 # Configure all of the volume information for Harbor.
 for i in "${!VOLUMES_PRESENT[@]}"; do

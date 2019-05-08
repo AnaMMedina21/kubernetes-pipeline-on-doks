@@ -21,7 +21,6 @@ read -p $'\033[33mPress enter to continue...\033[39m'
 echo "Install started $(date)"
 echo
 
-
 # ------------------------------------------------------------------------------
 # Check Dependencies: Brew, Kubectl, Helm, Doctl.
 # ------------------------------------------------------------------------------

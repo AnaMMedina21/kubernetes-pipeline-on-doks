@@ -9,8 +9,8 @@ expose:
   type: ingress
   tls:
     enabled: true
-    secretName: "harbor-registry-tls-staging"
-    notarySecretName: "harbor-notary-tls-staging"
+    secretName: "harbor-registry-tls-[CLUSTER_ISSUER]"
+    notarySecretName: "harbor-notary-tls-[CLUSTER_ISSUER]"
   ingress:
     hosts:
       core: [CORE_URL]
@@ -20,7 +20,7 @@ expose:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       ingress.kubernetes.io/proxy-body-size: "0"
       nginx.ingress.kubernetes.io/proxy-body-size: "0"
-      certmanager.k8s.io/cluster-issuer: letsencrypt-staging
+      certmanager.k8s.io/cluster-issuer: [CLUSTER_ISSUER]
 
 persistence:
   enabled: true
