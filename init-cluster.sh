@@ -103,17 +103,6 @@ echo
 
 
 # ------------------------------------------------------------------------------
-# Jenkins Setup
-# ------------------------------------------------------------------------------
-
-if ask "Jenkins is a continuous integration (CI) tool.\nInstall and configure Jenkins?" Y; then
-  echo
-  "${BASEDIR}"/scripts/install-jenkins.sh
-fi
-echo
-
-
-# ------------------------------------------------------------------------------
 # Harbor Setup
 # ------------------------------------------------------------------------------
 
@@ -124,3 +113,14 @@ fi
 echo
 
 echo "Your Kubernetes cluster install and provisioning is complete. $(date)"
+
+
+# ------------------------------------------------------------------------------
+# Jenkins Setup
+# ------------------------------------------------------------------------------
+
+if ask "Jenkins is a continuous integration (CI) tool.\nInstall and configure Jenkins?" Y; then
+  echo
+  "${BASEDIR}"/scripts/install-jenkins.sh
+fi
+echo

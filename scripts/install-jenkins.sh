@@ -104,7 +104,7 @@ choice=$?
 CLUSTER_ISSUER="${CLUSTER_ISSUERS[$choice]}"
 echo
 
-# Configure Jenkins values.
+# Configure Jenkins values
 echo "Configuring Jenkins. This will take 2-3 minutes."
 sed -E 's/\[HOSTNAME]/'"${JENKINS_FQDN}"'/;s/\[PVC_NAME]/'"${VOLUME_NAME}"'/;s/\[CLUSTER_ISSUER]/'"${CLUSTER_ISSUER}"'/' \
   "${BASEDIR}"/templates/jenkins-values.yaml > "${BASEDIR}"/files/jenkins-values.yaml
@@ -118,6 +118,9 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
+# Pods can only reference secrets in same namespaces. Copy the Harbor registry secret for Kaniki pushing.
+kubectl get secret regcred -n harbor -o yaml | sed "s/namespace: harbor/namespace: jenkins/"" | kubectl create -f -
+
 echo -e "\033[32mJenkins is available at https://${JENKINS_FQDN}\033[39m"
 JENKINS_PASSWORD=$(printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo)
-echo -e "\033[32mYour default Jenkins id is \033[39madmin\033[39m and password is\033[39m:${JENKINS_PASSWORD}\033[39m"
+echo -e "\033[32mYour default Jenkins id is \033[39madmin\033[39m \032[39and password is\033[39m ${JENKINS_PASSWORD}\033[39m"

@@ -224,6 +224,8 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
+kubectl create secret docker-registry regcred --docker-server="${HARBOR_FQDN}/library/" --docker-username=admin --docker-password=${ADMIN_PASSWORD}
+
 echo -e "\033[32mHarbor is available at via https://${HARBOR_FQDN}\033[39m"
 echo -e "\033[33mLog in using the username\033[39m: admin"
 echo -e "\033[33mand the password\033[39m: ${ADMIN_PASSWORD}"
