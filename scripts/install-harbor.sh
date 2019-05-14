@@ -224,7 +224,10 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
-kubectl create secret docker-registry regcred --docker-server="${HARBOR_FQDN}/library/" --docker-username=admin --docker-password=${ADMIN_PASSWORD}
+kubectl create secret docker-registry regcred --docker-server="${HARBOR_FQDN}" --docker-username=admin --docker-password=${ADMIN_PASSWORD}
+
+# Pods can only reference secrets in same namespaces. Copy the Harbor registry secret for Kaniki pushing.
+kubectl get secret regcred -n harbor -o yaml | sed "s/namespace: harbor/namespace: default/"" | kubectl create -f -
 
 echo -e "\033[32mHarbor is available at via https://${HARBOR_FQDN}\033[39m"
 echo -e "\033[33mLog in using the username\033[39m: admin"

@@ -119,8 +119,9 @@ if [[ $? -ne 0 ]]; then
 fi
 
 # Pods can only reference secrets in same namespaces. Copy the Harbor registry secret for Kaniki pushing.
-kubectl get secret regcred -n harbor -o yaml | sed "s/namespace: harbor/namespace: jenkins/"" | kubectl create -f -
+kubectl get secret regcred -n harbor -o yaml | sed "s/namespace: harbor/namespace: jenkins/" | kubectl create -f -
 
 echo -e "\033[32mJenkins is available at https://${JENKINS_FQDN}\033[39m"
 JENKINS_PASSWORD=$(printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo)
-echo -e "\033[32mYour default Jenkins id is \033[39madmin\033[39m \032[39and password is\033[39m ${JENKINS_PASSWORD}\033[39m"
+echo -e "\033[33mLog in using the username\033[39m: admin"
+echo -e "\033[33mand the password\033[39m: ${JENKINS_PASSWORD}"
