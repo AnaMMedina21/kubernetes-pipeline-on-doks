@@ -4,6 +4,7 @@ master:
   imageTag: "lts-alpine"
   imagePullPolicy: Always
 
+  adminPassword: [ADMIN_PASSWORD]
   hostName: [HOSTNAME]
 
   serviceType: ClusterIP

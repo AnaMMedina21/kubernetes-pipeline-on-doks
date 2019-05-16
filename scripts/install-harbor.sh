@@ -185,7 +185,7 @@ echo
 echo "Configuring Harbor..."
 
 # The initial password of Harbor admin.
-ADMIN_PASSWORD=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 16)
+ADMIN_PASSWORD=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 75)
 # The secret key used for encryption. Must be a string of 16 chars.
 SECRET_KEY=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 16)
 

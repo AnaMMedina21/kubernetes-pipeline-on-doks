@@ -104,9 +104,11 @@ choice=$?
 CLUSTER_ISSUER="${CLUSTER_ISSUERS[$choice]}"
 echo
 
+ADMIN_PASSWORD=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 75)
+
 # Configure Jenkins values
 echo "Configuring Jenkins. This will take 2-3 minutes."
-sed -E 's/\[HOSTNAME]/'"${JENKINS_FQDN}"'/;s/\[PVC_NAME]/'"${VOLUME_NAME}"'/;s/\[CLUSTER_ISSUER]/'"${CLUSTER_ISSUER}"'/' \
+sed -E 's/\[HOSTNAME]/'"${JENKINS_FQDN}"'/;s/\[ADMIN_PASSWORD]/'"${ADMIN_PASSWORD}"'/;s/\[PVC_NAME]/'"${VOLUME_NAME}"'/;s/\[CLUSTER_ISSUER]/'"${CLUSTER_ISSUER}"'/' \
   "${BASEDIR}"/templates/jenkins-values.yaml > "${BASEDIR}"/files/jenkins-values.yaml
 
 # Install Jenkins

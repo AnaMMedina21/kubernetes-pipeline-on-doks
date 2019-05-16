@@ -11,6 +11,8 @@ This project takes a few deviations:
 - Changed some messaging and added spinners for those blocking moments.
 - Other minor changes [noted in this change set](https://github.com/DefrostedTuna/kubernetes-scaffolding/pull/1).
 
+The installer will first provision local command line tools if you do not have them installed. The installation covers both Linux and MacOS local clients. It checks for the existence and installs: doctl, kubectl, helm. Once the cluster is installed its context is set for kubectl and helm access to the cluster.
+
 At some point this script might run more independently in a container. Converting to Anisible may also be a good leap forward. Suggestions are welcome.
 
 Below is the readme from the original project.
