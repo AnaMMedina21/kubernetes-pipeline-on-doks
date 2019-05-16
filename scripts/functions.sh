@@ -10,7 +10,7 @@ machine_name() {
         *)          machine="UNKNOWN:${unameOut}"
     esac
 
-    # export foo=$machine
+    export MACHINE=$machine
 }
 
 machine_name
@@ -147,6 +147,13 @@ function spinner() {
         done
         printf $reset
     done
+
     printf "    \b\b\b\b"
-    printf "$info: [done]\n\n"
+
+    if wait $pid; then
+        printf "$info: [done]\n\n"
+    else
+        printf "\033[31m$info: [FAILED]\n\n\033[39m"
+        exit 1
+    fi
 }

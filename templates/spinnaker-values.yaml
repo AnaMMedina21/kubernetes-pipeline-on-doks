@@ -1,0 +1,20 @@
+dockerRegistries:
+- address: "harbor.[HOSTNAME]/library"
+  email: "[EMAIL]"
+  name: "[NAME]"
+  repositories:
+    - company/dockerrepo1
+    - company/dockerrepo2
+    - personal/dockerrepo3
+
+kubeConfig:
+  enabled: false
+  contexts:
+  - my-kubernetes-cluster
+  deploymentContext: my-kubernetes-cluster
+
+spinnakerFeatureFlags:
+  - artifacts
+  - infrastructure-stages
+  - jobs
+  - pipeline-templates

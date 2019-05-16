@@ -110,16 +110,11 @@ sed -E 's/\[HOSTNAME]/'"${JENKINS_FQDN}"'/;s/\[PVC_NAME]/'"${VOLUME_NAME}"'/;s/\
   "${BASEDIR}"/templates/jenkins-values.yaml > "${BASEDIR}"/files/jenkins-values.yaml
 
 # Install Jenkins
-helm upgrade --install jenkins --wait --namespace jenkins stable/jenkins -f "${BASEDIR}"/files/jenkins-values.yaml > /dev/null & spinner "Installing Jenkins onto Kubernetes cluster"
-
-# Report result
-if [[ $? -ne 0 ]]; then
-  echo -e "\033[31mThere was a problem installing Jenkins.\033[39m"
-  exit 1
-fi
+helm upgrade --install jenkins --wait --namespace jenkins stable/jenkins --values "${BASEDIR}"/files/jenkins-values.yaml > /dev/null & \
+spinner "Installing Jenkins onto Kubernetes cluster"
 
 # Pods can only reference secrets in same namespaces. Copy the Harbor registry secret for Kaniki pushing.
-kubectl get secret regcred -n harbor -o yaml | sed "s/namespace: harbor/namespace: jenkins/" | kubectl create -f -
+kubectl get secret regcred -n harbor -o yaml | sed "s/namespace: harbor/namespace: jenkins/" | kubectl create -n jenkins -f -
 
 echo -e "\033[32mJenkins is available at https://${JENKINS_FQDN}\033[39m"
 JENKINS_PASSWORD=$(printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo)

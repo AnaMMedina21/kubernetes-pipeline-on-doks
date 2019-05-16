@@ -10,14 +10,14 @@ source "${BASEDIR}/scripts/functions.sh"
 echo "Checking dependencies..."
 
 # Install native package manager.
-"${BASEDIR}"/scripts/$machine/install-package-manager.sh
+"${BASEDIR}"/$MACHINE/install-package-manager.sh
 
-# Install Kubectl.
+# Install Kubectl CLI tool.
 if [ -z $(command -v kubectl) ]; then
   echo -e "\033[31mKubectl was not found.\033[39m"
   echo "Installing Kubectl, please wait..."
 
-  "${BASEDIR}"/scripts/$machine/kubectl-install.sh
+  "${BASEDIR}"/$MACHINE/kubectl-install.sh
 
   # Double check that Kubectl was installed.
   if [ -z $(command -v kubectl) ]; then
@@ -32,12 +32,12 @@ else
   echo -e "Kubectl is already installed."
 fi
 
-# Install Helm.
+# Install Helm CLI tool.
 if [ -z $(command -v helm) ]; then
   echo -e "\033[31mHelm was not found.\033[39m"
   echo -e "Installing Helm, please wait..."
 
-  "${BASEDIR}"/scripts/$machine/helm-install.sh
+  "${BASEDIR}"/$MACHINE/helm-install.sh
 
   # Double check that Helm was installed.
   if [ -z $(command -v helm) ]; then
@@ -52,12 +52,12 @@ else
   echo -e "Helm is already installed."
 fi
 
-# Install Doctl.
+# Install Doctl CLI.
 if [ -z $(command -v doctl) ]; then
   echo -e "\033[31mDoctl was not found.\033[39m"
   echo -e "Installing Doctl, please wait..."
 
-  "${BASEDIR}"/scripts/$machine/doctl-install.sh
+  "${BASEDIR}"/$MACHINE/doctl-install.sh
 
   # Double check that Doctl was installed.
   if [ -z $(command -v doctl) ]; then
@@ -70,6 +70,26 @@ if [ -z $(command -v doctl) ]; then
   fi
 else
   echo -e "Doctl is already installed."
+fi
+
+# Install Halyard (hal) CLI tool.
+if [ -z $(command -v hal) ]; then
+  echo -e "\033[31mHalyard (hal) was not found.\033[39m"
+  echo -e "Installing Halyard (hal), please wait..."
+
+  "${BASEDIR}"/$MACHINE/install-halyard.sh
+
+  # Double check that Halyard was installed.
+  if [ -z $(command -v hal) ]; then
+    echo -e "\033[31mThere was an error installing Halyard." \
+            "Halyard is required to interact with Spinnaker on DigitalOcean.\033[39m"
+    exit 1
+  else
+    echo "Halyard (hal) installed."
+    helm version
+  fi
+else
+  echo -e "Halyard (hal) is already installed."
 fi
 
 # ------------------------------------------------------------------------------

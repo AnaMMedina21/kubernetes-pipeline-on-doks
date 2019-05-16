@@ -1,0 +1,7 @@
+image:
+  tag: v1.10.1
+
+fullnameOverride: 'kubernetes-dashboard'
+
+extraArgs:
+  - --token-ttl=1800

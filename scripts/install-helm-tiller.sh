@@ -18,5 +18,7 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
-kubectl rollout status deployment/tiller-deploy  -n kube-system -w > /dev/null 2>&1 & spinner "Awaiting Helm/Tiller availability"
+kubectl rollout status deployment/tiller-deploy  -n kube-system -w > /dev/null 2>&1 & \
+spinner "Awaiting Helm/Tiller availability"
+
 echo -e "\033[32mHelm/Tiller is ready.\033[39m"

@@ -216,18 +216,12 @@ fi
 git --git-dir="${BASEDIR}"/files/harbor-helm/.git --work-tree="${BASEDIR}"/files/harbor-helm checkout 1.0.1 > /dev/null 2>&1
 
 helm upgrade --install harbor --namespace harbor \
-  "${BASEDIR}"/files/harbor-helm -f \
-  "${BASEDIR}"/files/harbor-values.yaml > /dev/null 2>&1 & spinner "Installing Harbor onto the Kubernetes cluster"
+  "${BASEDIR}"/files/harbor-helm --values \
+  "${BASEDIR}"/files/harbor-values.yaml > /dev/null 2>&1 & \
+spinner "Installing Harbor onto the Kubernetes cluster"
 
-if [[ $? -ne 0 ]]; then
-  echo -e "\033[31mThere was a problem installing Harbor.\033[39m"
-  exit 1
-fi
-
-kubectl create secret docker-registry regcred --docker-server="${HARBOR_FQDN}" --docker-username=admin --docker-password=${ADMIN_PASSWORD}
-
-# Pods can only reference secrets in same namespaces. Copy the Harbor registry secret for Kaniki pushing.
-kubectl get secret regcred -n harbor -o yaml | sed "s/namespace: harbor/namespace: default/"" | kubectl create -f -
+kubectl create secret docker-registry regcred -n default --docker-server="${HARBOR_FQDN}" --docker-username=admin --docker-password=${ADMIN_PASSWORD}
+kubectl create secret docker-registry regcred -n harbor  --docker-server="${HARBOR_FQDN}" --docker-username=admin --docker-password=${ADMIN_PASSWORD}
 
 echo -e "\033[32mHarbor is available at via https://${HARBOR_FQDN}\033[39m"
 echo -e "\033[33mLog in using the username\033[39m: admin"

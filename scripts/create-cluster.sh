@@ -89,6 +89,7 @@ else
   exit 1
 fi
 
-kubectl rollout status deployment/coredns -n kube-system > /dev/null & spinner "Waiting for the cluster to be available"
+kubectl rollout status deployment/coredns -n kube-system > /dev/null & \
+spinner "Waiting for the cluster to be available"
 
 echo -e "\033[32mKubernetes is ready.\033[39m"

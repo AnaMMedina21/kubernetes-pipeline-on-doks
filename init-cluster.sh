@@ -7,7 +7,6 @@ source "${BASEDIR}/scripts/functions.sh"
 # ------------------------------------------------------------------------------
 # Introduction
 # ------------------------------------------------------------------------------
-
 echo
 echo -e "This script will eases the process of setting up a" \
         "Kubernetes cluster, for CI/CD purposes, from scratch on" \
@@ -24,7 +23,7 @@ echo
 # ------------------------------------------------------------------------------
 # Check Dependencies: Brew, Kubectl, Helm, Doctl.
 # ------------------------------------------------------------------------------
-if ask "Locally, you will need some common tools as prerequisites.\nInstall these local CLI tools: Kubectl, Helm, and Doctl?" Y; then
+if ask "Locally, you will need some common tools as prerequisites.\nInstall these local CLI tools: Kubectl, Helm, Doctl, and Halyard (hal)?" Y; then
   echo
   "${BASEDIR}"/scripts/dependency-check.sh
 else
@@ -36,7 +35,6 @@ echo
 # ------------------------------------------------------------------------------
 # Create Cluster
 # ------------------------------------------------------------------------------
-
 if ask "A Kubernetes cluster on DigitalOcean (DOKS) is needed.\nCreate a new Kubernetes cluster?"; then
   echo
   "${BASEDIR}"/scripts/create-cluster.sh
@@ -53,7 +51,6 @@ echo
 # ------------------------------------------------------------------------------
 # Cluster Initializaton (Helm/Tiller)
 # ------------------------------------------------------------------------------
-
 if ask "Helm is a package manager for Kubernetes.\nInstall Helm and initialize its Tiller component?" Y; then
   echo
   "${BASEDIR}"/scripts/install-helm-tiller.sh
@@ -63,7 +60,6 @@ echo
 # ------------------------------------------------------------------------------
 # Dashboard Setup
 # ------------------------------------------------------------------------------
-
 if ask "Kubernetes has a generic dashboard for administration.\nInstall the Kubernetes Dashboard?" Y; then
   echo
   "${BASEDIR}"/scripts/install-dashboard.sh
@@ -73,7 +69,6 @@ echo
 # ------------------------------------------------------------------------------
 # Nginx Ingress Setup
 # ------------------------------------------------------------------------------
-
 if ask "Inbound cluster traffic is routed through a Kubernetes Ingress.\nInstall the Nginx Ingress controller?" Y; then
   echo
   "${BASEDIR}"/scripts/install-nginx-ingress.sh
@@ -94,7 +89,6 @@ echo
 # ------------------------------------------------------------------------------
 # Certificate Manager Setup
 # ------------------------------------------------------------------------------
-
 if ask "Inbound traffic must be https with TLS certificates.\nInstall a certificate manager (cert-manager)?" Y; then
   echo
   "${BASEDIR}"/scripts/install-cert-manager.sh
@@ -105,7 +99,6 @@ echo
 # ------------------------------------------------------------------------------
 # Harbor Setup
 # ------------------------------------------------------------------------------
-
 if ask "Harbor is a registry tool for holding artifacts such as containers and Helm charts.\nInstall and configure Harbor?" Y; then
   echo
   "${BASEDIR}"/scripts/install-harbor.sh
@@ -118,9 +111,22 @@ echo "Your Kubernetes cluster install and provisioning is complete. $(date)"
 # ------------------------------------------------------------------------------
 # Jenkins Setup
 # ------------------------------------------------------------------------------
-
 if ask "Jenkins is a continuous integration (CI) tool.\nInstall and configure Jenkins?" Y; then
   echo
   "${BASEDIR}"/scripts/install-jenkins.sh
 fi
 echo
+
+# ------------------------------------------------------------------------------
+# Spinnaker Setup
+# ------------------------------------------------------------------------------
+if ask "Spinnaker is a continuous deliver pipeline tool for distributing your applications to cluster.\nInstall and configure Spinnaker?" Y; then
+  echo
+  "${BASEDIR}"/scripts/install-spinnaker.sh
+fi
+echo
+
+# ------------------------------------------------------------------------------
+# La fin
+# ------------------------------------------------------------------------------
+echo "Your Kubernetes cluster provisioning is complete. $(date)"

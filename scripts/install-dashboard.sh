@@ -22,12 +22,9 @@ else
 fi
 
 # Install Dashboard
-helm upgrade --install --wait kubernetes-dashboard --namespace kube-system  stable/kubernetes-dashboard --set fullnameOverride="kubernetes-dashboard" > /dev/null 2>&1 & spinner "Installing dashboard onto Kubernetes cluster"
-
-if [[ $? -ne 0 ]]; then
-  echo -e "\033[31mThere was a problem installing Kubernetes Dashboard.\033[39m"
-  exit 1
-fi
+cp "${BASEDIR}"/templates/dashboard-values.yaml "${BASEDIR}"/files/dashboard-values.yaml > /dev/null 2>&1
+helm upgrade --install --wait kubernetes-dashboard --namespace kube-system stable/kubernetes-dashboard --values "${BASEDIR}"/files/dashboard-values.yaml > /dev/null 2>&1 & \
+spinner "Installing dashboard onto Kubernetes cluster"
 
 echo -e "\033[32mKubernetes Dashboard is ready.\033[39m"
 echo -e "\033[33mTo access the dashboard, you must run the following command in a terminal window:\033[39m"
