@@ -213,7 +213,7 @@ sed -E "${SED_STRING}" "${BASEDIR}"/templates/harbor-values.yaml > "${BASEDIR}"/
 if [[ ! -d "${BASEDIR}"/files/harbor-helm ]]; then
   git clone https://github.com/goharbor/harbor-helm "${BASEDIR}"/files/harbor-helm > /dev/null 2>&1
 fi
-git --git-dir="${BASEDIR}"/files/harbor-helm/.git --work-tree="${BASEDIR}"/files/harbor-helm checkout 1.0.1 > /dev/null 2>&1
+git --git-dir="${BASEDIR}"/files/harbor-helm/.git --work-tree="${BASEDIR}"/files/harbor-helm checkout 1.1.0 > /dev/null 2>&1
 
 helm upgrade --install harbor --namespace harbor \
   "${BASEDIR}"/files/harbor-helm --values \
