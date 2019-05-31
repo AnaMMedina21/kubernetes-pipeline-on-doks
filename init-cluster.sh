@@ -97,6 +97,16 @@ echo
 
 
 # ------------------------------------------------------------------------------
+# Vault Setup
+# ------------------------------------------------------------------------------
+if ask "Vault secures, stores, and tightly controls access to tokens, passwords, certificates, API keys, and other secrets.\nInstall and configure Vault?" Y; then
+  echo
+  "${BASEDIR}"/scripts/install-vault.sh
+fi
+echo
+
+
+# ------------------------------------------------------------------------------
 # Harbor Setup
 # ------------------------------------------------------------------------------
 if ask "Harbor is a registry tool for holding artifacts such as containers and Helm charts.\nInstall and configure Harbor?" Y; then

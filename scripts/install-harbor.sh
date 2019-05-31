@@ -103,18 +103,22 @@ fi
 
 # If there are volumes still needed, loop through the volumes that are needed and create them.
 if [[ "${#VOLUMES_NEEDED[@]}" -gt 0 ]]; then
-  echo "Creating the remaining volumes that are needed, please wait..."
+  echo "Creating the Harbor volumes."
 fi
 for i in "${!VOLUMES_NEEDED[@]}"; do
   SELECTED_VOLUME=$(echo "${VOLUMES_NEEDED[$i]}" | tr A-Z a-z)
 
-  # General volume info.
   VOLUME_NAME="pvc-harbor-${SELECTED_VOLUME}-1"
-  if [[ "${SELECTED_VOLUME}" == "registry" || "${SELECTED_VOLUME}" == "chartmuseum" ]]; then
-    VOLUME_SIZE="5" # The registry and chartmuseum should be at least 5GB.
+  
+  if [[ "${SELECTED_VOLUME}" == "registry" ]]; then
+    VOLUME_SIZE="250" # The registry at least 5GB.
+  elif [[ "${SELECTED_VOLUME}" == "chartmuseum" ]]; then
+    VOLUME_SIZE="10" # The chartmuseum should be at least 5GB.
   else
-    VOLUME_SIZE="1"
+    VOLUME_SIZE="2"
   fi
+
+  read -e -p "For Harbor volume ${VOLUME_NAME}, specify the desired size, [${VOLUME_SIZE}]GB: " -i "${VOLUME_SIZE}" VOLUME_SIZE
 
   echo "Creating a ${VOLUME_SIZE}GB Block Storage Volume named ${VOLUME_NAME} in" \
     "the ${CLUSTER_REGION} region. Please wait..."
@@ -126,7 +130,7 @@ for i in "${!VOLUMES_NEEDED[@]}"; do
     --output text)
 
   if [[ $? -eq 0 ]]; then
-    echo -e  "\033[32mVolume created.\033[39m"
+    echo -e "\033[32mVolume created.\033[39m"
     
     # Volume ID can only be found after creation.
     VOLUME_ID=$(echo "${CREATE_VOLUME_OUTPUT}" | awk '{if(NR>1)print $1}')
@@ -144,6 +148,8 @@ for i in "${!VOLUMES_NEEDED[@]}"; do
     echo -e "\033[31mThere was a problem creating the ${SELECTED_VOLUME} volume.\033[39m"
     exit 1
   fi
+
+  echo # Spacing.
 done
 
 echo "Mounting volumes to the Kubernetes cluster..."
@@ -155,7 +161,7 @@ for i in "${!VOLUMES_PRESENT[@]}"; do
   kubectl apply -f "${BASEDIR}"/files/pvc-harbor-"${VOLUMES_PRESENT[$i]}".yaml > /dev/null 2>&1
 
   if [[ $? -eq 0 ]]; then
-    echo -e  "\033[Mounted ${VOLUMES_PRESENT[$i]} volume.\033[39m"
+    echo -e "\033[31mMounted ${VOLUMES_PRESENT[$i]} volume.\033[39m"
   else
     echo -e "\033[31mThere was a problem mounting the ${VOLUMES_PRESENT[$i]} volume.\033[39m"
     exit 1
@@ -164,7 +170,7 @@ done
 echo
 
 # Staging or Production
-echo -e "\033[33mFollow fair use policies by only choosing Production if you are ready to go live with Jenkins. What cluster issuer type do you want to use?\033[39m" | fold -s
+echo -e "\033[33mFollow fair use policies by only choosing Production if you are ready to go live with Harbor. What cluster issuer type do you want to use?\033[39m" | fold -s
 CLUSTER_ISSUERS=("letsencrypt-staging" "letsencrypt-prod")
 select_option "${CLUSTER_ISSUERS[@]}"
 choice=$?
