@@ -14,8 +14,8 @@ master:
   - kubernetes:1.15.5
   - workflow-job:2.32
   - workflow-aggregator:2.6
-  - credentials-binding:1.18
-  - bitbucket:1.1.8
+  - credentials-binding:1.19
+  - bitbucket:1.1.9
 
   ingress:
     enabled: true
