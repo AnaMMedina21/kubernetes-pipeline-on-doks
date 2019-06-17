@@ -149,7 +149,12 @@ for i in "${!VOLUMES_NEEDED[@]}"; do
     VOLUME_SIZE="2"
   fi
 
-  read -e -p "For Harbor volume ${VOLUME_NAME}, specify the desired size, [${VOLUME_SIZE}]GB: " -i "${VOLUME_SIZE}" VOLUME_SIZE
+  read -e -p "For Harbor volume ${VOLUME_NAME}, specify the desired size, [${VOLUME_SIZE}]GB: " TARGET_VOLUME_SIZE; : "${VOLUME_SIZE}"
+
+  # Set the volume size if it was specified, otherwise keep default.
+  if [[ ! -z "${TARGET_VOLUME_SIZE}" ]]; then
+    VOLUME_SIZE="${TARGET_VOLUME_SIZE}"
+  fi
 
   echo "Creating a ${VOLUME_SIZE}GB Block Storage Volume named ${VOLUME_NAME} in" \
     "the ${CLUSTER_REGION} region. Please wait..."
@@ -240,15 +245,11 @@ done
 sed -E "${SED_STRING}" "${BASEDIR}"/templates/harbor-values.yaml > "${BASEDIR}"/files/harbor-values.yaml
 
 # Install Harbor
-# Since Harbor needs to be installed via a local chart, clone the chart to the local machine, and then checkout version
-if [[ ! -d "${BASEDIR}"/files/harbor-helm ]]; then
-  git clone https://github.com/goharbor/harbor-helm "${BASEDIR}"/files/harbor-helm > /dev/null 2>&1
-fi
-git --git-dir="${BASEDIR}"/files/harbor-helm/.git --work-tree="${BASEDIR}"/files/harbor-helm checkout 1.1.0 > /dev/null 2>&1
+helm repo add harbor https://helm.goharbor.io
 
-helm upgrade --install harbor --namespace harbor \
-  "${BASEDIR}"/files/harbor-helm --values \
-  "${BASEDIR}"/files/harbor-values.yaml > /dev/null 2>&1 & \
+helm upgrade --install --namespace harbor \
+  --values "${BASEDIR}"/files/harbor-values.yaml \
+  harbor harbor/harbor > /dev/null 2>&1 & \
 spinner "Installing Harbor onto the Kubernetes cluster"
 
 # Install ConfigMap and Secret replicator service
