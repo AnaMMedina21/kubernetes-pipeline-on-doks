@@ -5,4 +5,5 @@ metadata:
   annotations:
     replicator.v1.mittwald.de/replicate-from: harbor/regcred
 type: kubernetes.io/dockerconfigjson
-data: {}
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJoYXJib3Iub3JhY2xpcy5haSI6eyJ1c2VybmFtZSI6InJvYm90IiwicGFzc3dvcmQiOiJ0b2JlZmlsbGVkaW4iLCJhdXRoIjoiY205aWIzUTZkRzlpWldacGJHeGxaR2x1In19fQ==

@@ -18,6 +18,11 @@ echo "This will require a total of five Block Storage Volumes."
 echo "Gathering cluster information, please wait..."
 echo
 
+# The initial password of Harbor admin.
+ADMIN_PASSWORD=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 75)
+# The secret key used for encryption. Must be a string of 16 chars.
+SECRET_KEY=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 16)
+
 # This is a bit cumbersome, but it will ultimately be fairly reliable.
 CLUSTER_ID=$(kubectl cluster-info | \
   grep -om 1 "\(https://\)\([^.]\+\)" | \
@@ -32,7 +37,6 @@ VOLUMES_PRESENT=()
 VOLUME_IDS=()
 VOLUME_NAME=()
 VOLUME_SIZE=()
-RECORD_HARBOR_ADMIN_SECRET=false
 
 if ask "Are there existing volumes in DigitalOcean that should be used for Harbor?\033[39m"; then
   echo
@@ -99,19 +103,33 @@ if ask "Are there existing volumes in DigitalOcean that should be used for Harbo
     echo -e "\033[33mAre the any more volumes that you would like to use?\033[39m"
   done
 else
-  # When new volumes are being used, set a flag to ensure the original Harbor admin password 
-  # is recorded outside of the Harbor. Ideally this should be placed in Vault. For
-  # now the password secret gets placed in kube-system.
-  # The problem is Harbor stores the admin password in the database. If the password 
-  # is changed by the admin or Harbor is reinstalled via the script the admin password
-  # referenced is in the Harbor database and not the K8s secret. It's very possible that
-  # the Harbor admin password secret in Kubernetes will not match the actual Harbor 
-  # admin password. By storing the original admin password in kube-system, at least we
-  # have the original password when Harbor is restored. If the admin changes the password 
-  # the secret in kube-system will have to be manually updated to keep in sync.
-  # Due to secruity locking, if the admin password is lost, Harbor will have to be reinstalled
-  # with new volumes.
-  RECORD_HARBOR_ADMIN_SECRET=true
+  # When new volumes are being used, the original Harbor admin password is recorded outside of 
+  # the Harbor. Ideally this should be placed in Vault. For now the password secret is placed 
+  # in kube-system. The problem is Harbor stores the admin password in the database and the 
+  # source of truth for the admin passowrd is the database and not the k8s secret 
+  # HARBOR_ADMIN_PASSWORD that is created by the Harbor Helm chart. If the password is changed 
+  # by the admin, or Harbor is reinstalled, the admin password referenced in the Harbor database 
+  # no longer is in sync with the the K8s secret. It's very possible the Harbor admin password 
+  # secret in Kubernetes will not match the actual Harbor admin password. By storing the original 
+  # admin password in kube-system, at least we have the original password when Harbor is restored. 
+  # If the admin changes the password the secret in kube-system will have to be manually updated 
+  # to keep in sync. Due to secruity locking, if the admin password is lost, Harbor will have to 
+  # be reinstalled with new volumes.
+  kubectl delete secret harbor --namespace kube-system
+  kubectl create secret generic harbor --from-literal=HARBOR_ADMIN_PASSWORD="${ADMIN_PASSWORD}" --namespace kube-system
+
+  for each in $(kubectl get namespace -o jsonpath="{.items[*].metadata.name}");
+  do
+    if [[ $each != 'harbor' ]]; then
+      kubectl get secret 'regcred' --namespace $each > /dev/null 2>&1
+      if [[ $? -eq 0 ]]; then
+        kubectl delete secret 'regcred' --namespace $each > /dev/null 2>&1
+        kubectl create --namespace $each -f "${BASEDIR}/templates/regcred-blank.yaml" > /dev/null 2>&1
+        echo "Secret 'regcred' replaced in namespace: $each"
+      fi
+    fi
+  done
+  
 fi
 
 # If there are volumes still needed, loop through the volumes that are needed and create them.
@@ -203,11 +221,6 @@ echo
 # Configure Harbor values.
 echo "Configuring Harbor..."
 
-# The initial password of Harbor admin.
-ADMIN_PASSWORD=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 75)
-# The secret key used for encryption. Must be a string of 16 chars.
-SECRET_KEY=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 16)
-
 SED_STRING=""
 SED_STRING+="s/\[ADMIN_PASSWORD]/${ADMIN_PASSWORD}/;"
 SED_STRING+="s/\[SECRET_KEY]/${SECRET_KEY}/;"
@@ -237,12 +250,6 @@ helm upgrade --install harbor --namespace harbor \
   "${BASEDIR}"/files/harbor-helm --values \
   "${BASEDIR}"/files/harbor-values.yaml > /dev/null 2>&1 & \
 spinner "Installing Harbor onto the Kubernetes cluster"
-
-if [ RECORD_HARBOR_ADMIN_SECRET ];
-then
-   kubectl delete secret harbor -n kube-system
-   kubectl create secret generic harbor --from-literal=HARBOR_ADMIN_PASSWORD="${ADMIN_PASSWORD}" -n kube-system
-fi
 
 # Install ConfigMap and Secret replicator service
 # This replicates the "regcred" secret to other namespaces
