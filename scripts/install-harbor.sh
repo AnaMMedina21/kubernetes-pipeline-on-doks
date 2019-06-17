@@ -245,15 +245,11 @@ done
 sed -E "${SED_STRING}" "${BASEDIR}"/templates/harbor-values.yaml > "${BASEDIR}"/files/harbor-values.yaml
 
 # Install Harbor
-# Since Harbor needs to be installed via a local chart, clone the chart to the local machine, and then checkout version
-if [[ ! -d "${BASEDIR}"/files/harbor-helm ]]; then
-  git clone https://github.com/goharbor/harbor-helm "${BASEDIR}"/files/harbor-helm > /dev/null 2>&1
-fi
-git --git-dir="${BASEDIR}"/files/harbor-helm/.git --work-tree="${BASEDIR}"/files/harbor-helm checkout 1.1.0 > /dev/null 2>&1
+helm repo add harbor https://helm.goharbor.io
 
-helm upgrade --install harbor --namespace harbor \
-  "${BASEDIR}"/files/harbor-helm --values \
-  "${BASEDIR}"/files/harbor-values.yaml > /dev/null 2>&1 & \
+helm upgrade --install --namespace harbor \
+  --values "${BASEDIR}"/files/harbor-values.yaml \
+  harbor harbor/harbor > /dev/null 2>&1 & \
 spinner "Installing Harbor onto the Kubernetes cluster"
 
 # Install ConfigMap and Secret replicator service
