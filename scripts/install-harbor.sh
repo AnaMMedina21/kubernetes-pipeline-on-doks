@@ -149,7 +149,12 @@ for i in "${!VOLUMES_NEEDED[@]}"; do
     VOLUME_SIZE="2"
   fi
 
-  read -e -p "For Harbor volume ${VOLUME_NAME}, specify the desired size, [${VOLUME_SIZE}]GB: " -i "${VOLUME_SIZE}" VOLUME_SIZE
+  read -e -p "For Harbor volume ${VOLUME_NAME}, specify the desired size, [${VOLUME_SIZE}]GB: " TARGET_VOLUME_SIZE; : "${VOLUME_SIZE}"
+
+  # Set the volume size if it was specified, otherwise keep default.
+  if [[ ! -z "${TARGET_VOLUME_SIZE}" ]]; then
+    VOLUME_SIZE="${TARGET_VOLUME_SIZE}"
+  fi
 
   echo "Creating a ${VOLUME_SIZE}GB Block Storage Volume named ${VOLUME_NAME} in" \
     "the ${CLUSTER_REGION} region. Please wait..."
