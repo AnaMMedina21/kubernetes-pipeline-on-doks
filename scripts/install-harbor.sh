@@ -32,6 +32,7 @@ VOLUMES_PRESENT=()
 VOLUME_IDS=()
 VOLUME_NAME=()
 VOLUME_SIZE=()
+RECORD_HARBOR_ADMIN_SECRET=false
 
 if ask "Are there existing volumes in DigitalOcean that should be used for Harbor?\033[39m"; then
   echo
@@ -98,7 +99,19 @@ if ask "Are there existing volumes in DigitalOcean that should be used for Harbo
     echo -e "\033[33mAre the any more volumes that you would like to use?\033[39m"
   done
 else
-  echo # Spacing.
+  # When new volumes are being used, set a flag to ensure the original Harbor admin password 
+  # is recorded outside of the Harbor. Ideally this should be placed in Vault. For
+  # now the password secret gets placed in kube-system.
+  # The problem is Harbor stores the admin password in the database. If the password 
+  # is changed by the admin or Harbor is reinstalled via the script the admin password
+  # referenced is in the Harbor database and not the K8s secret. It's very possible that
+  # the Harbor admin password secret in Kubernetes will not match the actual Harbor 
+  # admin password. By storing the original admin password in kube-system, at least we
+  # have the original password when Harbor is restored. If the admin changes the password 
+  # the secret in kube-system will have to be manually updated to keep in sync.
+  # Due to secruity locking, if the admin password is lost, Harbor will have to be reinstalled
+  # with new volumes.
+  RECORD_HARBOR_ADMIN_SECRET=true
 fi
 
 # If there are volumes still needed, loop through the volumes that are needed and create them.
@@ -149,7 +162,7 @@ for i in "${!VOLUMES_NEEDED[@]}"; do
     exit 1
   fi
 
-  echo # Spacing.
+  echo
 done
 
 echo "Mounting volumes to the Kubernetes cluster..."
@@ -214,8 +227,7 @@ done
 sed -E "${SED_STRING}" "${BASEDIR}"/templates/harbor-values.yaml > "${BASEDIR}"/files/harbor-values.yaml
 
 # Install Harbor
-# Since Harbor needs to be installed via a local chart, clone the chart to the
-# local machine, and then checkout version 1.0.1.
+# Since Harbor needs to be installed via a local chart, clone the chart to the local machine, and then checkout version
 if [[ ! -d "${BASEDIR}"/files/harbor-helm ]]; then
   git clone https://github.com/goharbor/harbor-helm "${BASEDIR}"/files/harbor-helm > /dev/null 2>&1
 fi
@@ -226,8 +238,26 @@ helm upgrade --install harbor --namespace harbor \
   "${BASEDIR}"/files/harbor-values.yaml > /dev/null 2>&1 & \
 spinner "Installing Harbor onto the Kubernetes cluster"
 
-kubectl create secret docker-registry regcred -n default --docker-server="${HARBOR_FQDN}" --docker-username=admin --docker-password=${ADMIN_PASSWORD}
-kubectl create secret docker-registry regcred -n harbor  --docker-server="${HARBOR_FQDN}" --docker-username=admin --docker-password=${ADMIN_PASSWORD}
+if [ RECORD_HARBOR_ADMIN_SECRET ];
+then
+   kubectl delete secret harbor -n kube-system
+   kubectl create secret generic harbor --from-literal=HARBOR_ADMIN_PASSWORD="${ADMIN_PASSWORD}" -n kube-system
+fi
+
+# Install ConfigMap and Secret replicator service
+# This replicates the "regcred" secret to other namespaces
+# Since the Replicator needs to be installed via a local chart, clone the chart to the local machine, and then checkout version
+# TODO: This works, but service should instead be a Kubernetes Operator with better security.
+if [[ ! -d "${BASEDIR}"/files/k8s-replicator ]]; then
+  git clone https://github.com/mittwald/kubernetes-replicator "${BASEDIR}"/files/k8s-replicator > /dev/null 2>&1
+fi
+git --git-dir="${BASEDIR}"/files/k8s-replicator/.git --work-tree="${BASEDIR}"/files/k8s-replicator checkout 1.0.0 > /dev/null 2>&1
+
+helm upgrade --install kubernetes-replicator --namespace harbor "${BASEDIR}"/files/k8s-replicator/deploy/helm-chart/kubernetes-replicator
+
+# Create the regcred secret. It is advisable to later add a robot account(s) to Harbor and overwrite this "regcred"
+kubectl create secret docker-registry regcred -n harbor --docker-server="${HARBOR_FQDN}" --docker-username=admin --docker-password=${ADMIN_PASSWORD}
+kubectl annotate secret regcred -n harbor replicator.v1.mittwald.de/replication-allowed='true' replicator.v1.mittwald.de/replication-allowed-namespaces='[0-9]*'
 
 echo -e "\033[32mHarbor is available at via https://${HARBOR_FQDN}\033[39m"
 echo -e "\033[33mLog in using the username\033[39m: admin"

@@ -11,7 +11,7 @@ master:
   servicePort: 8080
 
   installPlugins:
-  - kubernetes:1.15.5
+  - kubernetes:1.16.0
   - workflow-job:2.32
   - workflow-aggregator:2.6
   - credentials-binding:1.19

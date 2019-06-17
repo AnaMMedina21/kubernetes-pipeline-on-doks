@@ -99,7 +99,7 @@ echo
 # ------------------------------------------------------------------------------
 # Vault Setup
 # ------------------------------------------------------------------------------
-if ask "Vault secures, stores, and tightly controls access to tokens, passwords, certificates, API keys, and other secrets.\nInstall and configure Vault?" Y; then
+if ask "Vault: This is under construction and experimental.\nVault secures, stores, and tightly controls access to tokens, passwords, certificates, API keys, and other secrets.\nInstall and configure Vault?" N; then
   echo
   "${BASEDIR}"/scripts/install-vault.sh
 fi
@@ -130,7 +130,7 @@ echo
 # ------------------------------------------------------------------------------
 # Spinnaker Setup
 # ------------------------------------------------------------------------------
-if ask "Spinnaker is a continuous deliver pipeline tool for distributing your applications to cluster.\nInstall and configure Spinnaker?" Y; then
+if ask "Spinnaker is a continuous deliver pipeline tool for distributing your applications to cluster.\nThis is under construction and experimental.\nInstall and configure Spinnaker?" N; then
   echo
   "${BASEDIR}"/scripts/install-spinnaker.sh
 fi

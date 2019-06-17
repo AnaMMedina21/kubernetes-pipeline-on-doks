@@ -13,7 +13,21 @@ This project takes a few deviations:
 
 The installer will first provision local command line tools if you do not have them installed. The installation covers both Linux and MacOS local clients. It checks for the existence and installs: doctl, kubectl, helm. Once the cluster is installed its context is set for kubectl and helm access to the cluster.
 
-At some point this script might run more independently in a container. Converting to Anisible may also be a good leap forward. Suggestions are welcome.
+## Roadmap ##
+
+Some ideas being consider to enhance this provisioner:
+
+- Latest versions are being kept up to date
+- Add Istio mesh with observability
+- Add EFK logging stack
+- Add Spinnaker
+- Add Metrics-server
+- OpenLDAP for centerally managing users lists for Jenkins and Harbor
+- Add Vault
+- Convert from provisioner from Bash to Anisible
+- Run provisioner from a container and avoid local CLI installs.
+
+Feel free to suggest fixes, additions, improvements, and alternatives.
 
 Below is the readme from the original project.
 
