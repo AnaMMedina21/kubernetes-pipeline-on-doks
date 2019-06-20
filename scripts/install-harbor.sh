@@ -117,6 +117,7 @@ else
   # be reinstalled with new volumes.
   kubectl delete secret harbor --namespace kube-system
   kubectl create secret generic harbor --from-literal=HARBOR_ADMIN_PASSWORD="${ADMIN_PASSWORD}" --namespace kube-system
+  kubectl annotate secret harbor --namespace kube-system replicator.v1.mittwald.de/replication-allowed='true' replicator.v1.mittwald.de/replication-allowed-namespaces='harbor'
 
   for each in $(kubectl get namespace -o jsonpath="{.items[*].metadata.name}");
   do
