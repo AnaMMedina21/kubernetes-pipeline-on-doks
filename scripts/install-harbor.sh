@@ -106,14 +106,14 @@ else
   # When new volumes are being used, the original Harbor admin password is recorded outside of 
   # the Harbor. Ideally this should be placed in Vault. For now the password secret is placed 
   # in kube-system. The problem is Harbor stores the admin password in the database and the 
-  # source of truth for the admin passowrd is the database and not the k8s secret 
+  # source of truth for the admin password is the database and not the k8s secret 
   # HARBOR_ADMIN_PASSWORD that is created by the Harbor Helm chart. If the password is changed 
   # by the admin, or Harbor is reinstalled, the admin password referenced in the Harbor database 
   # no longer is in sync with the the K8s secret. It's very possible the Harbor admin password 
   # secret in Kubernetes will not match the actual Harbor admin password. By storing the original 
   # admin password in kube-system, at least we have the original password when Harbor is restored. 
   # If the admin changes the password the secret in kube-system will have to be manually updated 
-  # to keep in sync. Due to secruity locking, if the admin password is lost, Harbor will have to 
+  # to keep in sync. Due to security locking, if the admin password is lost, Harbor will have to 
   # be reinstalled with new volumes.
   kubectl delete secret harbor --namespace kube-system
   kubectl create secret generic harbor --from-literal=HARBOR_ADMIN_PASSWORD="${ADMIN_PASSWORD}" --namespace kube-system
