@@ -1,5 +1,40 @@
 #!/bin/bash
 
+#One of the problems that this script runs into is that Sonarqube doesn't have a way to reset the default admin password 
+#upon installation. We have to use a curl command and the Sonarqube API. This script gives the installer the option to run
+#their instance of Sonarqube in either a production or staging environment. If they choose production, this script will 
+#stand up Sonarqube on the FQDN, wait for the url to return a 200 status code, and change the admin password via a curl command.
+#If however, they choose staging, this script will call a port-forward command to serve the Sonarqube dashboard on the localhost
+#and then it will call the Sonarqube api via the localhost as opposed to the FQDN which is not directly accessible. The following
+#function allows this script to perform the same setup for both production and staging environments based on the argument passed to
+#the function.
+
+sonarqube_setup(){
+  echo "Generating a Sonarqube Access Token for the admin account"
+  ADMIN_TOKEN=$(curl -X POST --silent -u admin:admin "$1/api/user_tokens/generate?name=sonarqube_admin_test" | jq -r '.token')
+
+  kubectl delete secret sonarqube-admin --namespace sonarqube >  /dev/null 2>&1 #in case the secrets don't exist 
+  kubectl delete secret sonarqube-admin --namespace kube-system > /dev/null 2>&1
+  kubectl delete configmap sonarqube-host-url --namespace sonarqube > /dev/null 2>&1
+
+  echo "Storing token as secret in Kubernetes"
+  kubectl create secret generic sonarqube-admin --from-literal=SONARQUBE_ADMIN_PASSWORD="${ADMIN_PASSWORD}" --from-literal=SONARQUBE_ADMIN_TOKEN="${ADMIN_TOKEN}" --namespace kube-system
+  kubectl annotate secret sonarqube-admin --namespace kube-system replicator.v1.mittwald.de/replication-allowed='true' replicator.v1.mittwald.de/replication-allowed-namespaces='sonarqube'
+
+  echo "Replicating secret across namespaces"
+  kubectl create secret generic sonarqube-admin --namespace sonarqube
+  kubectl annotate secret sonarqube-admin --namespace sonarqube replicator.v1.mittwald.de/replicate-from=kube-system/sonarqube-admin
+
+  echo "Creating a configmap in Kubernetes to store the Sonarqube Host URl"
+  Create a configMap to store the host url for Sonarqube in the sonarqube namespace
+  kubectl create configmap sonarqube-host-url --from-literal=sonarqube.host.url="https://${SONARQUBE_FQDN}" --namespace sonarqube 
+  kubectl annotate configmap sonarqube-host-url --namespace sonarqube replicator.v1.mittwald.de/replication-allowed='true' replicator.v1.mittwald.de/replication-allowed-namespaces='jenkins'
+
+  # Change the admin password using the Sonarqube web api and a curl command
+  echo "Setting the admin password"
+  curl -X POST -u admin:admin "$1/api/users/change_password?login=admin&password=${ADMIN_PASSWORD}&previousPassword=admin"
+}
+
 BASEDIR=$(dirname "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")
 source "${BASEDIR}/scripts/functions.sh"
 
@@ -24,7 +59,7 @@ echo
 echo
 echo -en "\033[33mWhat is the FQDN that Sonarqube will be hosted from?\033[39m "
 echo -e "Example: https://sonarqube.rootdomain.com, assuming *.rootdomain.com is the DNS A record."
-read -p "Jenkins domain name: https://" SONARQUBE_FQDN
+read -p "Sonarqube domain name: https://" SONARQUBE_FQDN
 
 # Strip out 'http://' and 'https://'.
 SONARQUBE_FQDN=$(echo "${SONARQUBE_FQDN}" | sed -e 's/http[s]\{0,1\}:\/\///g')
@@ -38,12 +73,8 @@ choice=$?
 CLUSTER_ISSUER="${CLUSTER_ISSUERS[$choice]}"
 echo
 
-# The initial password of Sonarqube admin.
+# Set the admin password to a complex string of length 75
 ADMIN_PASSWORD=$(head /dev/urandom | LC_ALL=C tr -dc A-Za-z0-9 | head -c 75)
-
-kubectl delete secret sonarqube --namespace kube-system
-kubectl create secret generic sonarqube --from-literal=SONARQUBE_ADMIN_PASSWORD="${ADMIN_PASSWORD}" --namespace kube-system
-kubectl annotate secret sonarqube --namespace kube-system replicator.v1.mittwald.de/replication-allowed='true' replicator.v1.mittwald.de/replication-allowed-namespaces='sonarqube'
 
 # Configure Sonarqube values
 echo "Configuring Sonarqube. This will take 2-3 minutes."
@@ -54,34 +85,42 @@ sed -E 's/\[HOSTNAME]/'"${SONARQUBE_FQDN}"'/;s/\[CLUSTER_ISSUER]/'"${CLUSTER_ISS
 helm upgrade --install sonarqube stable/sonarqube --wait --namespace sonarqube --values "${BASEDIR}"/files/sonarqube-values.yaml > /dev/null & \
 spinner "Installing Sonarqube onto Kubernetes cluster"
 
-#This should be more dynamic than just waiting for two minutes. However, we do need to wait, because if we don't the curl command below won't be able to execute.  
-#Ideally we put a loop of some kind in here that checks if the website is running and every n seconds and then once it returns a certain code, the loop breaks.
-#For now this will suffice.
-echo "Waiting for ${SONARQUBE_FQDN} to be up and running."
-sleep 120 
+#If we try to make a curl request against the sonarqube domain with a staging cluster issuer we will get an error because 
+#the Sonarqube dashboard is only accessible via a port forward 
+#Because of this, we have separated the two choices with an if statment. 
+if [ $CLUSTER_ISSUER == "letsencrypt-prod" ]; then
 
-# Change the admin password using the Sonarqube web api and a curl command
-echo "Setting the admin password"
-curl -X POST -u admin:admin "https://${SONARQUBE_FQDN}/api/users/change_password?login=admin&password=${ADMIN_PASSWORD}&previousPassword=admin"
+  echo "Waiting for ${SONARQUBE_FQDN} to be up and running"
 
-unameOut="$(uname -s)"
-case "${unameOut}" in
-    Linux*)     machine=Linux;;
-    Darwin*)    machine=Mac;;
-    CYGWIN*)    machine=Cygwin;;
-    MINGW*)     machine=MinGw;;
-    *)          machine="UNKNOWN:${unameOut}"
-esac
+  #Get the http status code from the sonarqube domain name and store it in a variable.
+  server_status=$(curl -s -o /dev/null -w "%{http_code}" https://${SONARQUBE_FQDN})
+  #Check to see if the status code is 200.
+  while [ $server_status -ne 200 ]
+  do
+    #If it isn't, wait three seconds and check it again.
+    sleep 10
+    server_status=$(curl -s -o /dev/null -w "%{http_code}" https://${SONARQUBE_FQDN})
+  done 
+  #Call the function to setup sonarqube with a FQDN as the argument
+  sonarqube_setup() "https://${SONARQUBE_FQDN}"
 
-# Copy token to the administrator's operating system clipboard
-if [ $machine == "Mac" ]; then
-  echo $ADMIN_PASSWORD | pbcopy
-elif [ $machine == "Linux" ]; then
-  echo $ADMIN_PASSWORD | xclip -selection clipboard -i
-elif [ $machine == "Cygwin" ]; then
-  echo $ADMIN_PASSWORD > /dev/clipboard
-fi
+#The user chooses the staging option
+elif [ $CLUSTER_ISSUER == "letsencrypt-staging" ]; then
 
-echo "Sonarqube admin password is now in your $machine clipboard."
-echo 
-echo "Sonarqube sucessfully installed."
+  # Get local access the sonarqube dashboard via a port forward command
+  kubectl port-forward service/sonarqube-sonarqube -n sonarqube 9000:9000 &
+  #Store the process id of the port forward call in a var
+  pid=$!
+  echo "Waiting for localhost:9000 to be up and running"
+  sleep 10
+  #Call the function to setup sonarqube with local host as the argument
+  sonarqube_setup "localhost:9000"
+  #End the process
+  kill $pid
+ 
+fi 
+
+  echo -e "\033[32mSonarqube is available at via https://${SONARQUBE_FQDN}\033[39m"
+  echo -e "\033[33mLog in using the username\033[39m: admin"
+  echo -e "\033[33mand the password\033[39m: ${ADMIN_PASSWORD}"
+
