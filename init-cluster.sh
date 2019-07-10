@@ -128,6 +128,15 @@ fi
 echo
 
 # ------------------------------------------------------------------------------
+# Sonarqube Setup
+# ------------------------------------------------------------------------------
+if ask "Sonarqube is a tool used to analyze code for smells and other bugs.\nInstall and configure Sonarqube?" Y; then
+  echo
+  "${BASEDIR}"/scripts/install-sonarqube.sh
+fi
+echo
+
+# ------------------------------------------------------------------------------
 # Spinnaker Setup
 # ------------------------------------------------------------------------------
 if ask "Spinnaker is a continuous deliver pipeline tool for distributing your applications to cluster.\nThis is under construction and experimental.\nInstall and configure Spinnaker?" N; then

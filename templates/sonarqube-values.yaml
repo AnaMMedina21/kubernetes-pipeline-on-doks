@@ -1,0 +1,48 @@
+image:
+  #Using version 7.6 as opposed to the most current version 7.9 because the sonar-bitbucket-plugin will not work 
+  #with a version > 7.6 due to the self described "required preview mode" in newer versions of Sonarqube
+  tag: 7.6-community 
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  hosts:
+    - name: [HOSTNAME]
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    certmanager.k8s.io/cluster-issuer: [CLUSTER_ISSUER]
+    ingress.kubernetes.io/secure-backends: "true"
+  tls:
+    - secretName: sonar-tls-[CLUSTER_ISSUER]
+      hosts:
+        - [HOSTNAME]
+    
+metadata:
+  name: basic-ingress
+
+persistence:
+  size: 10Gi
+  accessMode: ReadWriteOnce
+
+postgresql:
+  persistence:
+    size: 10Gi
+
+
+sonarProperties:
+  sonar.forceAuthentication: true
+
+# For a list of more plugins to consider see https://docs.sonarqube.org/display/PLUG/Plugin+Version+Matrix
+plugins: 
+  install: # Using version 5.13.1 of sonar-javap-plugin creates conflict with sonar-pmd-plugin that causes Sonarqube installation to fail
+    - 'https://binaries.sonarsource.com/Distribution/sonar-java-plugin/sonar-java-plugin-5.13.0.18197.jar'
+    - 'https://github.com/SonarQubeCommunity/sonar-pmd/releases/download/3.2.1/sonar-pmd-plugin-3.2.1.jar'
+    - 'https://github.com/spotbugs/sonar-findbugs/releases/download/3.12.0/sonar-findbugs-plugin-3.12.0.jar'
+    - 'https://github.com/checkstyle/sonar-checkstyle/releases/download/4.21/checkstyle-sonar-plugin-4.21.jar'
+    - 'https://github.com/sbaudoin/sonar-yaml/releases/download/v1.4.3/sonar-yaml-plugin-1.4.3.jar' 
+    - 'https://github.com/sbaudoin/sonar-ansible/releases/download/v2.2.0/sonar-ansible-plugin-2.2.0.jar' 
+    - 'https://binaries.sonarsource.com/Distribution/sonar-python-plugin/sonar-python-plugin-1.14.0.3086.jar'
+    - 'https://github.com/Soyn/sonar-bitbucket-plugin/releases/download/v1.3.0/sonar-bitbucket-plugin-1.3.0.jar'

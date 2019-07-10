@@ -116,7 +116,12 @@ helm upgrade --install jenkins --wait --namespace jenkins stable/jenkins --value
 spinner "Installing Jenkins onto Kubernetes cluster"
 
 # Jenkins access to the registry, actual secret is copied by secret replicator service
-kubectl create secret -n jenkins "${BASEDIR}"/templates/regcred-blank.yaml"
+kubectl create -f "${BASEDIR}/templates/regcred-blank.yaml" --namespace jenkins
+
+# Jenkins access to sonarqube host url, actual configMap is copied by replicator service
+kubectl create configMap sonarqube-host-url --namespace jenkins
+kubectl annotate configMap sonarqube-host-url --namespace jenkins replicator.v1.mittwald.de/replicate-from=sonarqube/sonarqube-host-url
+
 
 echo -e "\033[32mJenkins is available at https://${JENKINS_FQDN}\033[39m"
 JENKINS_PASSWORD=$(printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo)
