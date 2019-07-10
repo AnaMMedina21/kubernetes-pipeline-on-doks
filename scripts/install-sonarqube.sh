@@ -5,7 +5,7 @@
 #their instance of Sonarqube in either a production or staging environment. If they choose production, this script will 
 #stand up Sonarqube on the FQDN, wait for the url to return a 200 status code, and change the admin password via a curl command.
 #If however, they choose staging, this script will call a port-forward command to serve the Sonarqube dashboard on the localhost
-#and then it will call the Sonarqube api via the localhost as opposed to the FQDN which is not directly accessible. The following
+#and then it will call the Sonarqube api via the localhost as opposed to the FQDN which is not directly accessible during staging. The following
 #function allows this script to perform the same setup for both production and staging environments based on the argument passed to
 #the function.
 
@@ -97,7 +97,7 @@ if [ $CLUSTER_ISSUER == "letsencrypt-prod" ]; then
   #Check to see if the status code is 200.
   while [ $server_status -ne 200 ]
   do
-    #If it isn't, wait three seconds and check it again.
+    #If it isn't, wait a moment and check it again.
     sleep 10
     server_status=$(curl -s -o /dev/null -w "%{http_code}" https://${SONARQUBE_FQDN})
   done 
